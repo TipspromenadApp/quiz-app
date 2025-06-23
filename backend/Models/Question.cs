@@ -1,4 +1,4 @@
-﻿namespace backend.Models
+﻿namespace quiz_app.Models
 {
     public class Question
     {

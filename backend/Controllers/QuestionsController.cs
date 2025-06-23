@@ -1,4 +1,5 @@
-﻿using backend.Models;
+﻿using quiz_app.Models;
+using quiz_app;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 

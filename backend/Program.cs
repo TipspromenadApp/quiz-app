@@ -1,4 +1,4 @@
-using backend;
+using quiz_app;
 using Microsoft.EntityFrameworkCore;
 
 
