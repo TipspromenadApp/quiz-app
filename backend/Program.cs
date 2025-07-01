@@ -13,7 +13,18 @@ builder.Services.AddSwaggerGen();
 
 // SQLite connection
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlite("Data Source=quiz.db")); 
+    options.UseSqlite("Data Source=quiz.db"));
+
+// Add CORS policy
+builder.Services.AddCors(options =>
+{
+  options.AddPolicy("AllowLocalhost", builder =>
+  {
+    builder.WithOrigins("http://localhost:5178")
+           .AllowAnyMethod()
+           .AllowAnyHeader();
+  });
+});
 
 var app = builder.Build();
 
@@ -23,6 +34,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+app.UseCors("AllowLocalhost");
 
 app.UseHttpsRedirection();
 
@@ -30,4 +42,4 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-app.Run();
+app.Run("http://localhost:5249");
