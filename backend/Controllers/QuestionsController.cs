@@ -1,9 +1,8 @@
-﻿using quiz_app.Models;
-using quiz_app;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using quiz_app.Models;
 
-namespace backend.Controllers
+namespace quiz_app.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
@@ -16,19 +15,52 @@ namespace backend.Controllers
             _context = context;
         }
 
+       
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Question>>> GetQuestions()
         {
             return await _context.Questions.ToListAsync();
         }
 
-        [HttpPost]
-        public async Task<ActionResult<Question>> PostQuestion(Question question)
+       
+        [HttpGet("{id}")]
+        public async Task<ActionResult<Question>> GetQuestion(int id)
         {
-            _context.Questions.Add(question);
+            var question = await _context.Questions.FindAsync(id);
+
+            if (question == null)
+            {
+                return NotFound();
+            }
+
+            return question;
+        }
+
+[HttpPost]
+public async Task<ActionResult<Question>> CreateQuestion(Question question)
+{
+    _context.Questions.Add(question);
+    await _context.SaveChangesAsync();
+
+    return CreatedAtAction(nameof(GetQuestion), new { id = question.Id }, question);
+}
+
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteQuestion(int id)
+        {
+            var question = await _context.Questions.FindAsync(id);
+            if (question == null)
+            {
+                return NotFound();
+            }
+
+
+
+            _context.Questions.Remove(question);
             await _context.SaveChangesAsync();
-            return CreatedAtAction(nameof(GetQuestions), new { id = question.Id }, question);
+
+            return NoContent();
         }
     }
 }
-
