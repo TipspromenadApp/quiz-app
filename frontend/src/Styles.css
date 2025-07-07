@@ -1,266 +1,217 @@
-/* Reset default styles to prevent overflow */
-html, body, #root {
+
+body {
   margin: 0;
   padding: 0;
-  width: 100%;
-  height: 100%;
-  overflow-x: hidden;
-  box-sizing: border-box;
-}
-
-.app-container {
-  background-color: #e57373; /* Mellow red */
-  width: 100%;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  font-family: Arial, sans-serif;
-  padding-top: 50px; /* Offset for navbar */
-  box-sizing: border-box;
-}
-
-.navbar {
-  background-color: #c62828; /* Darker red */
-  width: 100%;
-  max-width: 100vw;
-  height: 50px;
-  position: fixed;
-  top: 0;
-  left: 0;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0 10px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  z-index: 1000;
-  box-sizing: border-box;
-}
-
-.navbar-brand {
-  color: #ffffff;
-  font-size: 18px;
-  font-weight: bold;
-  text-decoration: none;
-  flex-shrink: 0;
-}
-
-.navbar-links {
-  display: flex;
-  gap: 8px;
-  flex-wrap: nowrap;
-  flex-shrink: 1;
-  max-width: 50%;
+  font-family: 'Georgia', serif;
+  background-image: url('/forest.jpg');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  height: 100vh;
   overflow: hidden;
 }
 
-  .navbar-links a, .navbar-links button.navbar-link {
-    color: #ffffff;
-    font-size: 14px;
-    text-decoration: none;
-    transition: color 0.3s ease;
-    white-space: nowrap;
-    background: none;
-    border: none;
-    padding: 0;
-    cursor: pointer;
-  }
 
-    .navbar-links a:hover, .navbar-links button.navbar-link:hover {
-      color: #f0f0f0;
-    }
-
-.home-container {
+.hero {
+  position: relative;
+  height: 100vh;
+  overflow: hidden;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: calc(100vh - 50px); /* Full height minus navbar */
-  width: 100%;
-  text-align: center;
 }
 
-.welcome-text {
-  font-size: 24px;
-  color: #ffffff;
-  margin-bottom: 20px;
-}
-
-.play-button {
-  background-color: #c62828; /* Matches navbar */
-  color: #ffffff;
-  font-size: 24px;
-  font-weight: bold;
-  padding: 20px 40px;
-  border: none;
-  border-radius: 50px; /* Slightly rounded */
-  cursor: pointer;
-  transition: background-color 0.3s ease, transform 0.2s ease;
-}
-
-  .play-button:hover {
-    background-color: #b71c1c; /* Darker red on hover */
-    transform: scale(1.05); /* Slight grow effect */
-  }
-
-/* Modal styles */
-.modal-overlay {
-  position: fixed;
+.hero::before {
+  content: '';
+  position: absolute;
   top: 0;
   left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 2000;
+  right: 0;
+  bottom: 0;
+  background-image: url('/forest.jpg');
+  background-size: cover;
+  background-position: center;
+  filter: blur(2px);
+  z-index: 0; 
 }
 
-.modal-content {
-  background-color: #ffffff;
-  padding: 20px;
-  border-radius: 8px;
-  width: 90%;
-  max-width: 400px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+
+.overlay {
   position: relative;
+  z-index: 1;
+  padding: 2rem;
+  max-width: 800px;
+  width: 100%;
 }
 
-.modal-close {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  background: none;
-  border: none;
-  font-size: 20px;
-  cursor: pointer;
-  color: #c62828;
+
+
+.content {
+  background-color: rgba(0, 0, 0, 0.5); 
+  padding: 40px;
+  border-radius: 15px;
+  text-align: center;
+  color: white;
+  max-width: 600px;
 }
 
-.modal-tabs {
-  display: flex;
-  justify-content: space-around;
+.title {
+  font-size: 48px;
   margin-bottom: 20px;
 }
 
-.tab {
+.subtitle {
+  font-size: 20px;
+  font-style: italic;
+  margin-bottom: 10px;
+}
+
+.tagline {
+  font-size: 16px;
+  margin-bottom: 30px;
+}
+
+/* Applies to all buttons */
+button {
+  padding: 12px 24px;
+  margin: 10px;
+  border: 2px solid rgba(255, 255, 255, 0.6);
+  border-radius: 50px;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  font-size: 1rem;
+  font-weight: 500;
+  backdrop-filter: blur(6px);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+button:hover {
+  background: rgba(255, 255, 255, 0.3);
+  color: #000;
+  transform: scale(1.05);
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.4);
+}
+
+.back-link {
   background: none;
   border: none;
+  color: white;
   font-size: 16px;
-  padding: 10px;
-  cursor: pointer;
-  color: #c62828;
-  font-weight: bold;
-}
-
-  .tab.active {
-    border-bottom: 2px solid #c62828;
-    color: #e57373;
-  }
-
-.form-group {
-  margin-bottom: 15px;
-}
-
-  .form-group label {
-    display: block;
-    margin-bottom: 5px;
-    color: #333;
-  }
-
-  .form-group input {
-    width: 100%;
-    padding: 8px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    font-size: 14px;
-  }
-
-.form-button {
-  width: 100%;
-  padding: 10px;
-  background-color: #c62828;
-  color: #ffffff;
-  border: none;
-  border-radius: 4px;
-  font-size: 16px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-
-  .form-button:hover {
-    background-color: #b71c1c;
-  }
-
-.error-message {
-  color: #c62828;
-  font-size: 14px;
-  margin-top: 10px;
-  text-align: center;
-}
-
-.success-message {
-  color: #2e7d32;
-  font-size: 14px;
-  margin-top: 10px;
-  text-align: center;
-}
-
-
-.play-icon {
+  text-decoration: none;
   display: inline-block;
-  width: 0;
-  height: 0;
-  border-left: 40px solid #ffffff; 
-  border-top: 20px solid transparent; 
-  border-bottom: 20px solid transparent; 
-}
-
-.play-button {
-  background-color: #c62828; /* Matches navbar */
-  color: #ffffff;
-  font-size: 48px; 
-  font-weight: bold;
-  padding: 40px 80px; 
-  border: none;
-  border-radius: 50px; /* Slightly rounded */
+  margin-top: 20px;
+  margin-left: 10px;
   cursor: pointer;
-  transition: background-color 0.3s ease, transform 0.2s ease;
 }
 
-  .play-button:hover {
-    background-color: #b71c1c; /* Darker red on hover */
-    transform: scale(1.05); /* Slight grow effect */
+.back-link:hover {
+  text-decoration: underline;
+  color: #ddd;
+}
+
+
+.particle {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 50%;
+  animation: float 8s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes float {
+  0% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
   }
-
-
-
-/* Responsive design for smaller screens */
-@media (max-width: 600px) {
-  .navbar {
-    padding: 0 8px;
+  100% {
+    transform: translateY(-100vh) scale(0.5);
+    opacity: 0;
   }
+}
+.button {
+  background-color: transparent;
+  color: white;
+  border: 2px solid white;
+  padding: 12px 24px;
+  margin: 10px;
+  font-size: 18px;
+  border-radius: 30px;
+  cursor: pointer;
+  transition: background-color 0.3s, color 0.3s;
+}
 
-  .navbar-brand {
-    font-size: 16px;
-  }
+.button:hover {
+  background-color: white;
+  color: black;
+}
 
-  .navbar-links {
-    gap: 6px;
-  }
 
-    .navbar-links a, .navbar-links button.navbar-link {
-      font-size: 12px;
-    }
+.content ol {
+  text-align: left;
+  margin: 1.5rem 0;
+  padding-left: 1.5rem;
+  color: white;
+  line-height: 1.6;
+}
 
-  .modal-content {
-    width: 95%;
-    padding: 15px;
-  }
+.content li {
+  margin-bottom: 1rem;
+}
+.small-intro {
+  color: #eee;
+  font-size: 0.95rem;
+  font-weight: 300;
+  margin-top: 1rem;
+  text-align: center;
+  max-width: 600px;
+  line-height: 1.5;
+}
+.question-card {
+  background-color: rgba(255, 255, 255, 0.85);
+  padding: 20px;
+  border-radius: 12px;
+  max-width: 500px;
+  margin: 20px auto;
+  box-shadow: 0 0 10px rgba(0,0,0,0.2);
+}
 
-  .play-button {
-    font-size: 20px;
-    padding: 15px 30px;
-  }
+.question-card ul {
+  list-style: none;
+  padding-left: 0;
+}
+
+.question-card li {
+  background: #eee;
+  margin: 5px 0;
+  padding: 10px;
+  border-radius: 8px;
+}
+.question-card {
+  background-color: rgba(0, 0, 0, 0.6);
+  padding: 30px;
+  border-radius: 15px;
+  max-width: 600px;
+  margin: 30px auto;
+  color: white;
+  text-align: center;
+}
+.home-button {
+  background-color: transparent;
+  color: white;
+  border: 2px solid white;
+  padding: 12px 28px;
+  margin: 12px;
+  font-size: 18px;
+  font-family: 'Playfair Display', serif;
+  border-radius: 50px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.home-button:hover {
+  background-color: white;
+  color: black;
 }
