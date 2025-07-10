@@ -5,38 +5,47 @@ using Microsoft.EntityFrameworkCore;
 
 namespace quiz_app.Controllers
 {
-    [ApiController]
-    [Route("[controller]")]
-    public class LoginController : ControllerBase
+  [ApiController]
+  [Route("[controller]")]
+  public class LoginController : ControllerBase
+  {
+    private readonly AppDbContext _context;
+
+    public LoginController(AppDbContext context)
     {
-        private readonly AppDbContext _context;
-
-        public LoginController(AppDbContext context)
-        {
-            _context = context;
-        }
-
-        [HttpPost]
-        public IActionResult Login([FromBody] User loginUser)
-        {
-            // Look for a user in the database with the same email
-            var user = _context.Users.FirstOrDefault(u => u.Email == loginUser.Email);
-
-            // If user is not found, return Unauthorized
-            if (user == null)
-            {
-                return Unauthorized("Wrong email or password");
-            }
-
-            // If password hash doesn't match, return Unauthorized
-            if (!PasswordHelper.VerifyPassword(loginUser.PasswordHash, user.PasswordHash))
-    return Unauthorized("Wrong email or password");
-
-
-            // If both match, login is successful
-            return Ok("Login successful");
-        }
+      _context = context;
     }
+
+    [HttpPost]
+    public IActionResult Login([FromBody] User loginUser)
+    {
+      try
+      {
+        if (loginUser == null || string.IsNullOrEmpty(loginUser.Email) || string.IsNullOrEmpty(loginUser.PasswordHash))
+        {
+          return BadRequest(new { message = "Invalid login data: Email and Password are required." });
+        }
+
+        var user = _context.Users.FirstOrDefault(u => u.Email.ToLower() == loginUser.Email.ToLower());
+
+        if (user == null)
+        {
+          return Unauthorized(new { message = "Wrong email or password." });
+        }
+
+        if (!PasswordHelper.VerifyPassword(loginUser.PasswordHash, user.PasswordHash))
+        {
+          return Unauthorized(new { message = "Wrong email or password." });
+        }
+
+        return Ok(new { message = "Login successful" });
+      }
+      catch (Exception ex)
+      {
+        return StatusCode(500, new { message = $"Internal server error: {ex.Message}" });
+      }
+    }
+  }
 }
 
 

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-function LoginModal({ isOpen, onClose }) {
+function LoginModal({ isOpen, onClose, onLoginSuccess }) {
   const [activeTab, setActiveTab] = useState('login');
   const [loginData, setLoginData] = useState({ email: '', password: '' });
   const [registerData, setRegisterData] = useState({ username: '', email: '', password: '' });
@@ -16,20 +16,21 @@ function LoginModal({ isOpen, onClose }) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          Email: loginData.email,
-          PasswordHash: loginData.password,
+          email: loginData.email,
+          passwordHash: loginData.password,
         }),
       });
-      const data = await response.json();
-      if (response.ok) {
-        setSuccess(data); // e.g., "Login successful"
-        setLoginData({ email: '', password: '' });
-        setTimeout(onClose, 1000); // Close modal after 1s
-      } else {
-        setError(data || 'Login failed');
+      if (!response.ok) {
+        const errorData = await response.text();
+        throw new Error(errorData || 'Login failed');
       }
+      const data = await response.json();
+      setSuccess(data.message); // Access message property
+      setLoginData({ email: '', password: '' });
+      onLoginSuccess();
+      setTimeout(onClose, 1000);
     } catch (err) {
-      setError('Unable to connect to the server. Please check if the backend is running.');
+      setError(err.message || 'Unable to connect to the server. Please check if the backend is running.');
     }
   };
 
@@ -42,21 +43,21 @@ function LoginModal({ isOpen, onClose }) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          Username: registerData.username,
-          Email: registerData.email,
-          PasswordHash: registerData.password,
+          username: registerData.username,
+          email: registerData.email,
+          passwordHash: registerData.password,
         }),
       });
-      const data = await response.json();
-      if (response.ok) {
-        setSuccess(data); // e.g., "User registered successfully"
-        setRegisterData({ username: '', email: '', password: '' });
-        setActiveTab('login');
-      } else {
-        setError(data || 'Registration failed');
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Registration failed');
       }
+      const data = await response.json();
+      setSuccess(data.message); // Access message property
+      setRegisterData({ username: '', email: '', password: '' });
+      setActiveTab('login');
     } catch (err) {
-      setError('Unable to connect to the server. Please check if the backend is running.');
+      setError(err.message || 'Unable to connect to the server. Please check if the backend is running.');
     }
   };
 

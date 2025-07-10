@@ -234,6 +234,32 @@ html, body, #root {
     transform: scale(1.05); /* Slight grow effect */
   }
 
+/* Question form styles */
+.question-form {
+  background-color: #ffffff;
+  padding: 20px;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 600px; /* Increased to accommodate larger textarea */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.question-text-input {
+  width: 100%;
+  padding: 12px;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  min-height: 100px; /* Taller for longer questions */
+  max-height: 200px; /* Limit max height */
+  resize: vertical; /* Allow vertical resizing */
+  box-sizing: border-box;
+}
+
+.question-text-group {
+  margin-bottom: 30px; /* Separation from options */
+}
+
 
 
 /* Responsive design for smaller screens */
