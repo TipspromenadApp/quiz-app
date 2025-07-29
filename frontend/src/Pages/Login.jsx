@@ -6,11 +6,35 @@ function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const handleLogin = (e) => {
-    e.preventDefault();
-    
-    console.log("Login clicked:", email, password);
-  };
+  const handleLogin = async (e) => {
+  e.preventDefault();
+
+  try {
+    const response = await fetch("http://localhost:5001/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        email: email,
+        password: password
+      })
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      console.log("Login success:", data);
+     
+    } else {
+      const errorText = await response.text();
+      console.error("Login failed:", errorText);
+      alert("Login failed");
+    }
+  } catch (error) {
+    console.error("Network error:", error);
+    alert("Login error");
+  }
+};
 
   return (
     <div className="login-page">
