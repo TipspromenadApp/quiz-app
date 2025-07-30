@@ -1,16 +1,20 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import "./Login.css";
+import { useNavigate } from "react-router-dom";
+
 
 function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const navigate = useNavigate();
+
 
   const handleLogin = async (e) => {
   e.preventDefault();
 
   try {
-    const response = await fetch("http://localhost:5001/login", {
+    const response = await fetch("http://localhost:5249/login", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
@@ -22,10 +26,15 @@ function Login() {
     });
 
     if (response.ok) {
-      const data = await response.json();
-      console.log("Login success:", data);
-     
-    } else {
+  const data = await response.json();
+  console.log("Login success:", data);  
+ localStorage.setItem("user", JSON.stringify(data));
+
+
+  navigate("/dashboard"); 
+}
+
+   else {
       const errorText = await response.text();
       console.error("Login failed:", errorText);
       alert("Login failed");
