@@ -70,7 +70,20 @@ function Login() {
         </form>
         <Link to="/" className="back-link">← Back to Home</Link>
       </div>
+      {[...Array(10)].map((_, i) => (
+  <div
+    key={i}
+    className="firefly"
+    style={{
+      top: `${Math.random() * 100}vh`,
+      left: `${Math.random() * 100}vw`,
+      animationDelay: `${Math.random() * 5}s`,
+    }}
+  />
+))}
+
     </div>
+    
   );
 }
 

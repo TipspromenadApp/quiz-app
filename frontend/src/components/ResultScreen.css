@@ -1,0 +1,36 @@
+
+.result-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 70vh;
+  animation: fadeIn 2s ease forwards;
+  opacity: 0;
+}
+
+.result-box {
+  background: rgba(255, 255, 255, 0.8);
+  padding: 3rem;
+  border-radius: 20px;
+  box-shadow: 0 0 30px rgba(0,0,0,0.1);
+  text-align: center;
+}
+
+.score-number {
+  font-size: 3rem;
+  font-weight: bold;
+  color: #4B0082; 
+}
+
+.result-message {
+  margin-top: 1rem;
+  font-size: 1.2rem;
+  color: #333;
+  font-style: italic;
+}
+
+@keyframes fadeIn {
+  to {
+    opacity: 1;
+  }
+}

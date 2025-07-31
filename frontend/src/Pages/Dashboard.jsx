@@ -1,9 +1,6 @@
-
-
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Dashboard.css";
-import React, { useEffect, useState } from "react";
-
 
 function Dashboard() {
   const [user, setUser] = useState(null);
@@ -14,14 +11,21 @@ function Dashboard() {
     if (savedUser) {
       setUser(savedUser);
     } else {
-      navigate("/login"); 
+      navigate("/login");
     }
-  }, []);
-console.log("Saved user:", user);
-
+  }, [navigate]);
 
   const handleStart = () => {
     navigate("/quiz");
+  };
+
+  const handleMultiplayer = () => {
+    navigate("/multiplayer");
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("user");
+    navigate("/login");
   };
 
   return (
@@ -29,19 +33,18 @@ console.log("Saved user:", user);
       <div className="dashboard-box">
         <h2>Welcome back, {user?.username || user?.email}</h2>
 
-
         <p className="affirmation">“Every path through the forest leads to growth.”</p>
 
         <div className="progress">You've completed 0 of 5 quiz rounds.</div>
 
-        <button className="start-btn" onClick={handleStart}>
-          Start My Journey
-        </button>
-        <button onClick={() => {
-  localStorage.removeItem("user");
-  navigate("/login");
-}} className="logout-btn">
-  Logga ut
+      <button className="dashboard-btn" onClick={handleStart}>
+  Feel the First Breeze
+</button>
+<button className="dashboard-btn" onClick={handleMultiplayer}>
+  Play with Friends
+</button>
+<button className="dashboard-btn" onClick={handleLogout}>
+  Logout
 </button>
 
       </div>
@@ -50,4 +53,5 @@ console.log("Saved user:", user);
 }
 
 export default Dashboard;
+
 

@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import './quiz.css';
 import { Link } from 'react-router-dom';
+import { useNavigate } from "react-router-dom";
+
 
 const Quiz = () => {
   const [rounds, setRounds] = useState(1);
@@ -12,6 +14,13 @@ const Quiz = () => {
   const [showResult, setShowResult] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
   const [shuffledQuestions, setShuffledQuestions] = useState([]);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [score, setScore] = useState(0);           
+const [quizFinished, setQuizFinished] = useState(false); 
+
+
+  const navigate = useNavigate();
+
   const playClickSound = () => {
   const audio = new Audio('/sounds/soft-click.wav'); 
   audio.volume = 0.2; 
@@ -112,6 +121,30 @@ const roundThreeQuestions = [
     correctAnswer: "Pen"
   }
 ];
+const roundFourQuestions = [
+  { id: 31, text: "Which object orbits the Earth?", options: ["Sun", "Moon", "Cloud", "Star"], correctAnswer: "Moon" },
+  { id: 32, text: "What do plants need to grow?", options: ["Sugar", "Sunlight", "Salt", "Paper"], correctAnswer: "Sunlight" },
+  { id: 33, text: "Which one is a real planet?", options: ["Krypton", "Earth", "Atlantis", "Neverland"], correctAnswer: "Earth" },
+  { id: 34, text: "What do astronauts wear?", options: ["Spacesuit", "Raincoat", "Lab coat", "Tuxedo"], correctAnswer: "Spacesuit" },
+  { id: 35, text: "What happens when ice melts?", options: ["It floats", "It turns into water", "It disappears", "It grows"], correctAnswer: "It turns into water" },
+  { id: 36, text: "What pulls things down to the ground?", options: ["Air", "Gravity", "Wind", "Heat"], correctAnswer: "Gravity" },
+  { id: 37, text: "Which one is a liquid?", options: ["Rock", "Water", "Wood", "Cotton"], correctAnswer: "Water" },
+  { id: 38, text: "Which of these can you see through?", options: ["Metal", "Paper", "Glass", "Brick"], correctAnswer: "Glass" },
+  { id: 39, text: "Which one is made by lightning?", options: ["Fire", "Snow", "Thunder", "Rain"], correctAnswer: "Thunder" },
+  { id: 40, text: "What do caterpillars turn into?", options: ["Bees", "Spiders", "Butterflies", "Flies"], correctAnswer: "Butterflies" }
+];
+const roundFiveQuestions = [
+  { id: 41, text: "What do you call a story that’s not real?", options: ["Biography", "Fiction", "History", "Fact"], correctAnswer: "Fiction" },
+  { id: 42, text: "Which one helps you wake up in the morning?", options: ["Flashlight", "Alarm clock", "Calendar", "Mirror"], correctAnswer: "Alarm clock" },
+  { id: 43, text: "Which one is a feeling?", options: ["Joy", "Table", "Paper", "Window"], correctAnswer: "Joy" },
+  { id: 44, text: "What do you do when you’re tired?", options: ["Jump", "Run", "Sleep", "Dance"], correctAnswer: "Sleep" },
+  { id: 45, text: "Which animal is imaginary?", options: ["Horse", "Dragon", "Cat", "Sheep"], correctAnswer: "Dragon" },
+  { id: 46, text: "Which tool tells you the day?", options: ["Watch", "Thermometer", "Calendar", "Ruler"], correctAnswer: "Calendar" },
+  { id: 47, text: "What do you wear when it rains?", options: ["Sneakers", "Raincoat", "Sunglasses", "Gloves"], correctAnswer: "Raincoat" },
+  { id: 48, text: "Which one is a kind word?", options: ["Mean", "Happy", "Angry", "Rude"], correctAnswer: "Happy" },
+  { id: 49, text: "Which place is magical in stories?", options: ["Grocery store", "Library", "Castle", "Garage"], correctAnswer: "Castle" },
+  { id: 50, text: "Which one is used to tell a story with pictures?", options: ["Song", "Book", "Movie", "Puzzle"], correctAnswer: "Movie" }
+];
 
 
 
@@ -124,172 +157,215 @@ const roundThreeQuestions = [
     "There is quiet strength in simply choosing to begin again. Today holds gentle new beginnings."
   ];
 
-  //SHUFFLE LOGIC
-  const shuffleArray = (array) => {
-    const copy = [...array];
-    for (let i = copy.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [copy[i], copy[j]] = [copy[j], copy[i]];
-    }
-    return copy;
-  };
-
-  //START QUIZ
-  const handleStart = () => {
-    setQuizStarted(true);
-    setCurrentRound(1);
-    setCurrentQuestionIndex(0);
-    setShowAffirmation(false);
-    setSelectedAnswer(null);
-    setShowResult(false);
-
-    const shuffled = roundOneQuestions.map(q => ({
-      ...q,
-      options: shuffleArray(q.options)
-    }));
-    setShuffledQuestions(shuffleArray(shuffled));
-  };
-
-  // HANDLE ANSWER AND AUTO-NEXT
-const handleAnswer = (option) => {
-  playClickSound();
-  setSelectedAnswer(option);
-  const correct = shuffledQuestions[currentQuestionIndex].correctAnswer === option;
-  setIsCorrect(correct);
-  setShowResult(true);
-
-  // Auto-advance after short delay (e.g. 1.5 seconds)
-  setTimeout(() => {
-    setSelectedAnswer(null);
-    setShowResult(false);
-    if (currentQuestionIndex < shuffledQuestions.length - 1) {
-      setCurrentQuestionIndex(prev => prev + 1);
-    } else {
-      setShowAffirmation(true); 
-    }
-  }, 1500); // adjust delay if needed
+  // Shuffle function
+const shuffleArray = (array) => {
+  const copy = [...array];
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
 };
 
-
-  return (
-    <div className="quiz-container content-box">
-      <h1 className="quiz-title">Welcome, Explorer of the Mind</h1>
-<p className="quiz-subtitle">Choose your path and begin the journey of self-discovery.</p>
-
-
-      
-      {!quizStarted && (
-        <div style={{ textAlign: 'center' }}>
-          <label htmlFor="rounds" style={{ fontSize: '18px' }}>Choose number of rounds:</label>
-          <br />
-          <select
- 
-  id="rounds"
-  className="quiz-select"
-  value={rounds}
-  onChange={(e) => setRounds(parseInt(e.target.value))}
->
-
-
-            <option value={1}>1 Round</option>
-            <option value={2}>2 Rounds</option>
-            <option value={3}>3 Rounds</option>
-            <option value={4}>4 Rounds</option>
-            <option value={5}>5 Rounds</option>
-          </select>
-          <br />
-          <button className="quiz-button" onClick={handleStart}>Start Quest</button>
-        </div>
-      )}
-
-      {/*QUIZ IN PROGRESS*/}
-      {quizStarted && !showAffirmation && shuffledQuestions.length > 0 && (
-        <div>
-          <h2>Round {currentRound}</h2>
-          <p style={{ fontSize: '18px', marginBottom: '10px' }}>
-            <strong>Question {currentQuestionIndex + 1}:</strong> {shuffledQuestions[currentQuestionIndex].text}
-          </p>
-
-         {shuffledQuestions.length > 0 && shuffledQuestions[currentQuestionIndex] && (
-  shuffledQuestions[currentQuestionIndex].options.map((option, idx) => (
-    <button
-      key={idx}
-      onClick={() => handleAnswer(option)}
-      disabled={showResult}
-      className={`answer-btn ${selectedAnswer === option ? 'selected' : ''}`}
-    >
-      {option}
-    </button>
-  ))
-)}
-
-
-          {showResult && (
-            <div className="result">
-              <p style={{ color: isCorrect ? 'green' : 'red' }}>
-                {isCorrect ? 'Correct!' : `Incorrect. The correct answer is: ${shuffledQuestions[currentQuestionIndex].correctAnswer}`}
-              </p>
-              
-            </div>
-          )}
-        </div>
-      )}
-
-      {/*AFFIRMATION PAGE*/}
-      {showAffirmation && (
-        <div className="affirmation">
-          <h2 style={{ fontStyle: 'italic', color: '#444' }}>
-            {affirmations[Math.floor(Math.random() * affirmations.length)]}
-          </h2>
-          {currentRound < rounds ? (
-            <button
-              className="quiz-button"
-             onClick={() => {
-  setCurrentRound(prev => prev + 1);
+// Start the first round
+const handleStart = () => {
+  setQuizStarted(true);
+  setCurrentRound(1);
   setCurrentQuestionIndex(0);
   setShowAffirmation(false);
   setSelectedAnswer(null);
   setShowResult(false);
+  setScore(0);
+  setQuizFinished(false);
 
-  let nextQuestions = [];
-
-  if (currentRound === 1) {
-    nextQuestions = roundTwoQuestions;
-  } else if (currentRound === 2) {
-    nextQuestions = roundThreeQuestions;
-  } else {
-    // Placeholder: AI questions can go here later
-    nextQuestions = roundThreeQuestions;
-  }
-
-  const shuffled = nextQuestions.map(q => ({
+  const shuffled = roundOneQuestions.map((q) => ({
     ...q,
-    options: shuffleArray(q.options)
+    options: shuffleArray(q.options),
   }));
-
   setShuffledQuestions(shuffleArray(shuffled));
-}}
-
-            >
-              Start Round {currentRound + 1}
-            </button>
-          ) : (
-            <>
-  <p className="completion-message">
-    All rounds complete. You made it. Thank you for being here.
-  </p>
-  <Link to="/" className="back-link">← Back to Home</Link>
-</>
-
-          )}
-        </div>
-      )}
-    </div>
-  );
 };
 
+// Handle answer selection
+const handleAnswer = (option) => {
+  playClickSound();
+  setSelectedAnswer(option);
 
+  const correct =
+    shuffledQuestions[currentQuestionIndex].correctAnswer === option;
+  setIsCorrect(correct);
+  setShowResult(true);
 
+  if (correct) {
+    setScore((prev) => prev + 1);
+  }
 
+  setTimeout(() => {
+    setSelectedAnswer(null);
+    setShowResult(false);
 
+    if (currentQuestionIndex < shuffledQuestions.length - 1) {
+      setCurrentQuestionIndex((prev) => prev + 1);
+    } else {
+      setQuizFinished(true);
+      setShowAffirmation(true);
+    }
+  }, 1500);
+};
+
+return (
+  <div className="quiz-container content-box">
+    <h1 className="quiz-title">Welcome, Explorer of the Mind</h1>
+    <p className="quiz-subtitle">
+      Choose your path and begin the journey of self-discovery.
+    </p>
+
+    {/* START PAGE */}
+    {!quizStarted && (
+      <>
+        <label htmlFor="rounds" style={{ fontSize: "18px" }}>
+          Choose number of rounds:
+        </label>
+
+        <div className="button-row">
+          <div className="custom-dropdown">
+            <button
+              className="dropdown-button"
+              onClick={() => setShowDropdown(!showDropdown)}
+            >
+              {rounds} Round{rounds > 1 ? "s" : ""} ▼
+            </button>
+
+            {showDropdown && (
+              <ul className="dropdown-menu">
+                {[1, 2, 3, 4, 5].map((r) => (
+                  <li
+                    key={r}
+                    className="dropdown-item"
+                    onClick={() => {
+                      setRounds(r);
+                      setShowDropdown(false);
+                    }}
+                  >
+                    {r} Round{r > 1 ? "s" : ""}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+
+          <button className="quiz-button" onClick={handleStart}>
+            Start Quest
+          </button>
+        </div>
+
+        <Link to="/" className="back-link">
+          ← Back to Home
+        </Link>
+      </>
+    )}
+
+    {/* QUIZ IN PROGRESS */}
+    {quizStarted && !showAffirmation && shuffledQuestions.length > 0 && (
+      <div>
+        <h2>Round {currentRound}</h2>
+        <p style={{ fontSize: "18px", marginBottom: "10px" }}>
+          <strong>Question {currentQuestionIndex + 1}:</strong>{" "}
+          {shuffledQuestions[currentQuestionIndex].text}
+        </p>
+
+        {shuffledQuestions[currentQuestionIndex]?.options.map(
+          (option, idx) => (
+            <button
+              key={idx}
+              onClick={() => handleAnswer(option)}
+              disabled={showResult}
+              className={`answer-btn ${
+                selectedAnswer === option ? "selected" : ""
+              }`}
+            >
+              {option}
+            </button>
+          )
+        )}
+
+        {showResult && (
+          <div className="result">
+            <p style={{ color: isCorrect ? "green" : "red" }}>
+              {isCorrect
+                ? "Correct!"
+                : `Incorrect. The correct answer is: ${shuffledQuestions[currentQuestionIndex].correctAnswer}`}
+            </p>
+          </div>
+        )}
+      </div>
+    )}
+
+    {/* AFFIRMATION PAGE */}
+    {showAffirmation && (
+      <div className="affirmation">
+        {/* SCORE DISPLAY */}
+        {quizFinished && (
+          <div className="score-summary">
+            <p>
+              Correct: <span className="correct">{score}</span> / Incorrect:{" "}
+              <span className="incorrect">
+                {Math.max(0, shuffledQuestions.length - score)}
+              </span>
+            </p>
+          </div>
+        )}
+
+        {/* AFFIRMATION MESSAGE */}
+        <h2 className="glow-text">
+          {affirmations[Math.floor(Math.random() * affirmations.length)]}
+        </h2>
+
+        {/* NEXT ROUND BUTTON */}
+        {currentRound < rounds ? (
+          <button
+            className="quiz-button"
+            onClick={() => {
+              setCurrentRound((prev) => prev + 1);
+              setCurrentQuestionIndex(0);
+              setShowAffirmation(false);
+              setSelectedAnswer(null);
+              setShowResult(false);
+              setScore(0);
+              setQuizFinished(false);
+
+              let nextQuestions = [];
+
+              if (currentRound === 1) {
+                nextQuestions = roundTwoQuestions;
+              } else if (currentRound === 2) {
+                nextQuestions = roundThreeQuestions;
+              } else {
+                nextQuestions = roundThreeQuestions;
+              }
+
+              const shuffled = nextQuestions.map((q) => ({
+                ...q,
+                options: shuffleArray(q.options),
+              }));
+
+              setShuffledQuestions(shuffleArray(shuffled));
+            }}
+          >
+            Start Round {currentRound + 1}
+          </button>
+        ) : (
+          <>
+            <p className="completion-message">
+              All rounds complete. You made it. Thank you for being here.
+            </p>
+            <Link to="/" className="back-link">
+              ← Back to Home
+            </Link>
+          </>
+        )}
+      </div>
+    )}
+  </div>
+);
+}
 export default Quiz;
