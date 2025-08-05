@@ -1,0 +1,63 @@
+.dashboard {
+  height: 100vh;
+  background: url('/forest.jpg') no-repeat center center fixed;
+  background-size: cover;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Georgia', serif;
+  color: #fff;
+}
+
+.dashboard-box {
+  background: rgba(0, 0, 0, 0.6);
+  padding: 3rem;
+  border-radius: 20px;
+  text-align: center;
+  box-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
+}
+
+.affirmation {
+  margin: 1rem 0;
+  font-style: italic;
+  font-size: 1.2rem;
+}
+
+.progress {
+  margin: 1rem 0;
+}
+
+.btn {
+  padding: 10px 20px;
+  background: transparent;
+  border: 2px solid white;
+  border-radius: 25px;
+  color: white;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: 0.3s ease;
+}
+
+.start-btn:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  transform: scale(1.03);
+}
+
+
+.start-btn:hover {
+  background: #bde0fe;
+}
+.multiplayer-btn {
+  margin-top: 1rem;
+  background-color: transparent;
+  border: 1px solid #fff;
+  padding: 10px 20px;
+  border-radius: 20px;
+  color: white;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.multiplayer-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}

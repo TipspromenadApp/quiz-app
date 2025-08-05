@@ -6,14 +6,16 @@ import {
   Link
 } from 'react-router-dom';
 import './Styles.css';
-import Quiz from './pages/Quiz';
-import About from './pages/About';
+import Quiz from './Pages/Quiz';
+import About from './Pages/About';
 import LoginModal from './components/LoginModal';
-import PlaceholderPage from './pages/PlaceholderPage';
-import Register from './pages/Register';
-import Home from './pages/Home'; 
-import Login from './pages/Login';
-import HowItWorks from './pages/HowItWorks';
+import PlaceholderPage from './Pages/PlaceholderPage';
+import Register from './Pages/Register';
+import Home from './Pages/Home'; 
+import Login from './Pages/Login';
+import HowItWorks from './Pages/HowItWorks';
+import Dashboard from "./Pages/Dashboard";
+
 
 
 
@@ -34,6 +36,7 @@ function App() {
         <Route path="/how-it-works" element={<HowItWorks />} />
         <Route path="/about" element={<About />} />
         <Route path="/quiz" element={<Quiz />} />
+         <Route path="/dashboard" element={<Dashboard />} />
 
 
 

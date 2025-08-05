@@ -17,7 +17,9 @@ function HowItWorks({ title }) {
 
           <ol>
             <li><strong>Choose Your Path:</strong> Solo or with friends.</li>
-            <li><strong>Pick Question Count:</strong> Decide how many you'd like on your journey.</li>
+             <li>
+            <strong>Choose Your Rounds:</strong> Decide how many rounds you’d like to explore.
+          </li>
             <li><strong>Begin the Walk:</strong> Start moving — a new question appears at each marker.</li>
             <li><strong>Answer & Reflect:</strong> Choose your answer, see if you got it right, and feel proud!</li>
             <li><strong>Complete Rounds:</strong> Each round contains around 10 questions. At the end of each round, you’ll receive a gentle affirmation to celebrate your progress.</li>

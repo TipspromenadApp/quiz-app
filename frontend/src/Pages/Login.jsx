@@ -1,16 +1,49 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import "./Login.css";
+import { useNavigate } from "react-router-dom";
+
 
 function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const navigate = useNavigate();
 
-  const handleLogin = (e) => {
-    e.preventDefault();
-    
-    console.log("Login clicked:", email, password);
-  };
+
+  const handleLogin = async (e) => {
+  e.preventDefault();
+
+  try {
+    const response = await fetch("http://localhost:5249/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        email: email,
+        password: password
+      })
+    });
+
+    if (response.ok) {
+  const data = await response.json();
+  console.log("Login success:", data);  
+ localStorage.setItem("user", JSON.stringify(data));
+
+
+  navigate("/dashboard"); 
+}
+
+   else {
+      const errorText = await response.text();
+      console.error("Login failed:", errorText);
+      alert("Login failed");
+    }
+  } catch (error) {
+    console.error("Network error:", error);
+    alert("Login error");
+  }
+};
 
   return (
     <div className="login-page">
@@ -37,7 +70,20 @@ function Login() {
         </form>
         <Link to="/" className="back-link">← Back to Home</Link>
       </div>
+      {[...Array(10)].map((_, i) => (
+  <div
+    key={i}
+    className="firefly"
+    style={{
+      top: `${Math.random() * 100}vh`,
+      left: `${Math.random() * 100}vw`,
+      animationDelay: `${Math.random() * 5}s`,
+    }}
+  />
+))}
+
     </div>
+    
   );
 }
 

@@ -54,8 +54,30 @@ function Register() {
 
         <Link to="/" className="back-link">← Back to Home</Link>
       </div>
+  {[...Array(10)].map((_, i) => {
+  const top = Math.random() * 100;
+  const left = Math.random() * 100;
+  const delay = Math.random() * 5;
+
+  return (
+    <div
+      key={i}
+      className="firefly"
+      style={{
+        top: `${top}vh`,
+        left: `${left}vw`,
+        animationDelay: `${delay}s`,
+      }}
+    />
+  );
+})}
+
+
     </div>
   );
+  
+
+  
 }
 
 export default Register;
