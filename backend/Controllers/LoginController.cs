@@ -17,26 +17,29 @@ namespace quiz_app.Controllers
         }
 
         [HttpPost]
-        public IActionResult Login([FromBody] User loginUser)
+        public IActionResult Login([FromBody] LoginRequest loginUser)
         {
-            // Look for a user in the database with the same email
             var user = _context.Users.FirstOrDefault(u => u.Email == loginUser.Email);
 
-            // If user is not found, return Unauthorized
             if (user == null)
             {
                 return Unauthorized("Wrong email or password");
             }
 
-            // If password hash doesn't match, return Unauthorized
-            if (!PasswordHelper.VerifyPassword(loginUser.PasswordHash, user.PasswordHash))
-    return Unauthorized("Wrong email or password");
+            if (!PasswordHelper.VerifyPassword(loginUser.Password, user.PasswordHash))
+            {
+                return Unauthorized("Wrong email or password");
+            }
 
-
-            // If both match, login is successful
-            return Ok("Login successful");
+           
+            return Ok(new
+            {
+                Username = user.Username,
+                Email = user.Email
+            });
         }
     }
 }
+
 
 

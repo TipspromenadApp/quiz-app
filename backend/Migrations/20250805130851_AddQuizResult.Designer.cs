@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using quiz_app;
 
@@ -10,9 +11,11 @@ using quiz_app;
 namespace backend.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250805130851_AddQuizResult")]
+    partial class AddQuizResult
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.6");
@@ -42,7 +45,7 @@ namespace backend.Migrations
 
                     b.HasIndex("QuizResultId");
 
-                    b.ToTable("AnswerEntries");
+                    b.ToTable("AnswerEntry");
                 });
 
             modelBuilder.Entity("quiz_app.Models.Question", b =>
@@ -242,8 +245,7 @@ namespace backend.Migrations
                 {
                     b.HasOne("quiz_app.Models.QuizResult", null)
                         .WithMany("Answers")
-                        .HasForeignKey("QuizResultId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .HasForeignKey("QuizResultId");
                 });
 
             modelBuilder.Entity("quiz_app.Models.QuizResult", b =>
