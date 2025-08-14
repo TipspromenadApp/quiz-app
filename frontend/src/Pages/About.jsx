@@ -10,31 +10,41 @@ function About() {
     <div className="hero">
       <div className="overlay">
         <div className="content">
-          <h2 className="title">How It Works</h2>
+          <h2 className="title">Så fungerar det</h2>
 <audio src="/sounds/forest.mp3" autoPlay loop />
 
-          <p className="tagline">Welcome, explorer! </p>
-          <p>
-            This app invites you to take short walks — while answering fun and thoughtful quiz questions at each stop.
-          </p>
+       <p className="tagline">Välkommen, utforskare!</p>
+<p>
+  Den här appen bjuder in dig till korta promenader – där du vid varje stopp får svara på roliga och tankeväckande quizfrågor.
+</p>
 
-          <ol>
-            <li><strong>Choose Your Path:</strong> Solo or with friends.</li>
-            <li>
-            <strong>Choose Your Rounds:</strong> Decide how many rounds you’d like to explore.
-          </li>
-            <strong>Begin the Walk:</strong> Step into the journey — a new question appears as you move forward.
+<ol>
+  <li>
+    <strong>Välj din väg:</strong> Gå själv eller tillsammans med vänner.
+  </li>
+  <li>
+    <strong>Välj antal rundor:</strong> Bestäm hur många rundor du vill utforska.
+  </li>
+  <li>
+    <strong>Börja gå:</strong> Börja röra på dig – en ny fråga dyker upp vid varje markering.
+  </li>
+  <li>
+    <strong>Svara och reflektera:</strong> Välj ditt svar, se om du hade rätt och känn dig stolt!
+  </li>
+  <li>
+    <strong>Avsluta rundor:</strong> Varje runda innehåller ungefär 10 frågor. I slutet av varje runda får du en varm bekräftelse som firar dina framsteg.
+  </li>
+  <li>
+    <strong>Nå målet:</strong> När alla rundor är klara får du en sammanfattning av hela din resa.
+  </li>
+</ol>
 
-            <li><strong>Answer & Reflect:</strong> Choose your answer, see if you got it right, and feel proud!</li>
-            <li><strong>Complete Rounds:</strong> Each round contains around 10 questions. At the end of each round, you’ll receive a gentle affirmation to celebrate your progress.</li>
-            <li><strong>Reach the End:</strong> Once all rounds are complete, enjoy a summary of your full journey.</li>
-          </ol>
+<p>
+  Det handlar inte bara om rätt svar. Det handlar om att gå, lära sig och få höra ett vänligt ord när du behöver det som mest.
+</p>
 
-          <p>
-            It’s not just about right answers. It’s about walking, learning, and hearing a kind word when you need it most.
-          </p>
 
-          <Link to="/" className="back-link">← Back to Home</Link>
+         <Link to="/" className="back-link">← Tillbaka till start</Link>
 
           
         </div>

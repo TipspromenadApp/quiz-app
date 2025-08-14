@@ -15,7 +15,8 @@ import Home from './Pages/Home';
 import Login from './Pages/Login';
 import HowItWorks from './Pages/HowItWorks';
 import Dashboard from "./Pages/Dashboard";
-
+import FinalResultScreen from './components/FinalResultScreen';
+import RegisterWelcome from "./Pages/RegisterWelcome";
 
 
 
@@ -37,6 +38,9 @@ function App() {
         <Route path="/about" element={<About />} />
         <Route path="/quiz" element={<Quiz />} />
          <Route path="/dashboard" element={<Dashboard />} />
+<Route path="/final-result" element={<FinalResultScreen />} />
+<Route path="/welcome-new" element={<RegisterWelcome />} />
+
 
 
 

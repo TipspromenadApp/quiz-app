@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using quiz_app.Models;
 using quiz_app.Helpers;
 using Microsoft.EntityFrameworkCore;
+using quiz_app.Dtos;
 
 namespace quiz_app.Controllers
 {

@@ -259,4 +259,7 @@ h2 {
   font-weight: bold;
 }
 
-
+.skip-btn {
+  display: block;
+  margin: 20px auto 0; /* space above and center horizontally */
+}
