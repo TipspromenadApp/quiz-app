@@ -1,0 +1,168 @@
+
+.bot-page {
+  position: relative;
+  min-height: 100vh;
+}
+
+.bot-bg{
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background-image:
+    
+    linear-gradient(rgba(0,0,0,0.44), rgba(0,0,0,0.44)),
+   
+    radial-gradient(120% 90% at 50% 32%,
+      rgba(0,0,0,0) 0%,
+      rgba(0,0,0,0.16) 60%,
+      rgba(0,0,0,0.34) 100%
+    ),
+    url('/images/ocean.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  opacity: 0;
+  transition: opacity 3200ms ease-in;
+}
+.bot-bg.is-visible{ opacity: 1; }
+
+
+.bot-page .frosty-container{
+  background: rgba(0,0,0,0.34);               
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 20px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,.06);
+}
+
+.compact-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  margin: 8px 0;
+  flex-wrap: wrap;
+}
+
+.two-groups .inline-setting {
+  margin: 0 10px;
+}
+
+.no-border { border: none; padding: 0; margin: 0; }
+.mini-legend { font-size: 14px; opacity: .9; text-align: center; margin-bottom: 6px; }
+
+.radio-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-right: 12px;
+  cursor: pointer;
+}
+
+.round-check {
+  appearance: none;
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.95);
+  display: inline-block;
+  position: relative;
+  vertical-align: middle;
+}
+.round-check:checked::after {
+  content: "";
+  position: absolute;
+  top: 3px; left: 3px;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.95);
+}
+
+.selects-line { margin-top: 6px; }
+.compact-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.tiny-select {
+  appearance: none;
+  padding: 8px 28px 8px 14px;
+  min-width: 120px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.35);
+  background: rgba(255,255,255,0.14);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: #fff;
+  outline: none;
+  font-size: 14px;
+  line-height: 1.1;
+  text-shadow: 0 1px 2px rgba(0,0,0,.35);
+}
+
+.pill-select {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 12'><path fill='white' d='M2 0l8 8 8-8 2 2-10 10L0 2z'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 12px 12px;
+}
+
+.tiny-select:hover {
+  background: rgba(255,255,255,0.20);
+  border-color: rgba(255,255,255,0.45);
+}
+.tiny-select:focus {
+  box-shadow: 0 0 0 2px rgba(255,255,255,0.25) inset;
+  border-color: rgba(255,255,255,0.65);
+}
+
+.tiny-select option {
+  background: rgba(255,255,255,0.08);
+  color: #fff;
+}
+
+.walk-distance {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 12px;
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 999px;
+  background: rgba(255,255,255,0.04);
+  font-size: 14px;
+}
+
+.italic-center {
+  display: block;
+  text-align: center;
+  font-style: italic;
+  margin-top: 8px;
+}
+
+@media (max-width: 720px) {
+  .compact-field { font-size: 13px; }
+  .tiny-select { min-width: 112px; }
+}
+
+.bot-page { position: relative; min-height: 100vh; color: #fff; }
+.bot-bg{
+  position: fixed; inset: 0; z-index: -1;
+  background-image:
+    linear-gradient(rgba(0,0,0,.28), rgba(0,0,0,.28)),
+    url("/images/ocean.jpg");
+  background-size: cover; background-position: center; background-repeat: no-repeat;
+  opacity: 0; transition: opacity 2400ms ease-in;
+}
+.bot-bg.is-visible{ opacity: 1; }
+
+.frosty-container{
+  max-width: 900px; margin: 40px auto; padding: 28px;
+  background: rgba(0,0,0,.35);
+  border: 1px solid rgba(255,255,255,.22);
+  border-radius: 22px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 20px 60px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.06);
+  text-align: center;
+}

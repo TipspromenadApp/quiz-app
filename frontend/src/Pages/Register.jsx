@@ -4,35 +4,48 @@ import "./Register.css";
 
 function Register() {
   const [username, setUsername] = useState("");
-  const [email, setEmail] = useState("");
+  const [email, setEmail]       = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [error, setError]       = useState("");
   const navigate = useNavigate();
 
-  const API_BASE = "http://localhost:5249";
-  const REGISTER_PATH = "/Register"; // <-- update to correct path from Swagger
-  const REGISTER_URL = `${API_BASE}${REGISTER_PATH}`;
+  const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:5249";
+  const REGISTER_URL = `${API_BASE}/api/auth/register`;
 
   const handleRegister = async (e) => {
     e.preventDefault();
     setError("");
 
     try {
-      console.log("POST ->", REGISTER_URL);
+      const payload = {
+        username: username.trim() || undefined,
+        email: email.trim().toLowerCase(),
+        password: password
+      };
 
       const res = await fetch(REGISTER_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, email, password }),
+        body: JSON.stringify(payload),
       });
 
       if (!res.ok) {
-        const text = await res.text();
-        throw new Error(`HTTP ${res.status}: ${text || "Registrering misslyckades"}`);
+        let msg = "Registrering misslyckades";
+        try {
+          const body = await res.json();
+          msg = body?.message || msg;
+        } catch {
+          try { msg = (await res.text()) || msg; } catch {}
+        }
+        throw new Error(`HTTP ${res.status}: ${msg}`);
       }
 
-      localStorage.setItem("justRegisteredUser", username);
-      navigate("/welcome-new", { state: { userName: username } });
+      const display = username.trim() || email.trim().toLowerCase();
+     
+      localStorage.setItem("loggedInUser", display);
+      localStorage.setItem("justRegisteredUser", display);
+
+      navigate("/welcome-new", { state: { userName: display } });
     } catch (err) {
       console.error("Registreringsfel:", err);
       setError(err.message || "Ett fel uppstod. Försök igen senare.");
@@ -44,6 +57,7 @@ function Register() {
       <div className="register-card">
         <h2>Registrera</h2>
         {error && <p className="error-message">{error}</p>}
+
         <form onSubmit={handleRegister}>
           <label>Användarnamn</label>
           <input
@@ -99,8 +113,3 @@ function Register() {
 }
 
 export default Register;
-
-
-
-
-

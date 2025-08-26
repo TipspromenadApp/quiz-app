@@ -1,25 +1,84 @@
-.button-row {
-  display: flex;
-  justify-content: center;
-  gap: 12px;
-  flex-wrap: wrap;
-  margin-top: 20px;
-}
 
-.button-row button {
-  padding: 10px 24px;
-  font-size: 16px;
-  border: 1px solid #ccc;
-  border-radius: 30px;
-  background: transparent;
+.home-page {
+  position: relative;
+  min-height: 100vh;
+  overflow: hidden;
   color: #fff;
+  font-family: "Georgia", serif;
+}
+
+
+.home-page .home-bg {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background-image:
+   
+    linear-gradient(rgba(0,0,0,0.22), rgba(0,0,0,0.22)),
+    url('/forest.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  opacity: 0;
+  transition: opacity 3600ms ease-in;
+}
+.home-page .home-bg.is-visible { opacity: 1; }
+
+.home-page .home-overlay {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 32px 16px;
+}
+
+.home-page .home-card {
+  width: 100%;
+  max-width: 920px;
+  padding: 36px clamp(20px, 4vw, 44px);
+  background: rgba(0,0,0,0.40);
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 26px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,.06);
+  text-align: center;
+}
+
+.home-page h1, .home-page h2, .home-page p, .home-page a { color: #fff; }
+
+.home-page .home-title { font-size: clamp(28px, 3.2vw, 44px); font-weight: 800; margin: 0 0 6px; letter-spacing: .3px; }
+.home-page .home-subtitle { color: #dfe6ee; margin: 0 0 8px; font-style: italic; }
+.home-page .home-tagline { color: #eef3f7; margin: 0 0 18px; }
+.home-page .home-welcome { margin: 10px 0 6px; }
+
+.home-page .button-row {
+  display: flex; justify-content: center; gap: 16px; flex-wrap: wrap; margin-top: 16px;
+}
+.home-page .frosty-btn {
+  background: rgba(255,255,255,0.14);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.45);
+  border-radius: 14px;
+  padding: 12px 22px;
+  min-width: 200px;
+  font-size: 16px; font-weight: 600;
   cursor: pointer;
-  transition: 0.3s ease;
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  transition: transform .06s ease, filter .15s ease, border-color .2s ease, background .2s ease;
+}
+.home-page .frosty-btn:hover {
+  background: rgba(255,255,255,0.22);
+  border-color: rgba(255,255,255,0.55);
+  filter: brightness(1.04);
+  transform: translateY(-1px);
 }
 
-.button-row button:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: #fff;
-  box-shadow: 0 0 6px rgba(255, 255, 255, 0.3);
+.home-page .keep-line { margin-top: 10px; }
+.home-page .keep-link {
+  color: rgba(255,255,255,0.92);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  font-size: 13px;
+  opacity: .9;
 }
-
+.home-page .keep-link:hover { opacity: 1; }

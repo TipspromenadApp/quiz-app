@@ -15,15 +15,17 @@ namespace quiz_app.Controllers
         }
 
         [HttpGet("start")]
-public IActionResult StartQuiz(int count, bool random)
-{
-    var questions = random
-        ? _context.Questions.OrderBy(q => Guid.NewGuid()).Take(count).ToList()
-        : _context.Questions.OrderBy(q => q.Id).Take(count).ToList();
+        public IActionResult StartQuiz(int count, bool random)
+        {
+            var questions = random
+                ? _context.Questions.OrderBy(q => Guid.NewGuid()).Take(count).ToList()
+                : _context.Questions.OrderBy(q => q.Id).Take(count).ToList();
 
-    return Ok(questions);
-}
-
+            return Ok(questions);
         }
+
+    
+
+    }
     }
 

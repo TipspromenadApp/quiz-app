@@ -1,15 +1,36 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import axios from "axios";
 import "./FinalResultScreen.css";
 import { Link, useLocation } from "react-router-dom";
 
-const FinalResultScreen = () => {
-  const location = useLocation();
-  const { state } = location;
+const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:5249";
+
+export default function FinalResultScreen() {
+  const { state } = useLocation();
 
   const [answers, setAnswers] = useState([]);
   const [totalCorrect, setTotalCorrect] = useState(0);
   const [total, setTotal] = useState(0);
+
+ 
+  const [bgLoaded, setBgLoaded] = useState(false);
+  const audioRef = useRef(null);
+  const BG_URL = "/images/forest1.jpg?v=1"; 
+
+  useEffect(() => {
+    const img = new Image();
+    img.src = BG_URL;
+    img.onload = () => setBgLoaded(true);
+  }, [BG_URL]);
+
+  useEffect(() => {
+    const a = audioRef.current;
+    if (!a) return;
+    a.volume = 0.12;
+    a.muted = false;
+    const p = a.play();
+    if (p && typeof p.catch === "function") p.catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (state?.answers?.length) {
@@ -18,97 +39,178 @@ const FinalResultScreen = () => {
       const totalQ = state.totalQuestions ?? state.answers.length;
       setTotalCorrect(correct);
       setTotal(totalQ);
-
       localStorage.setItem("finalAnswers", JSON.stringify(state.answers));
       localStorage.setItem("finalScore", String(correct));
       return;
     }
-
     const stored = JSON.parse(localStorage.getItem("finalAnswers") || "[]");
     setAnswers(stored);
     setTotal(stored.length);
     setTotalCorrect(stored.filter(a => a.isCorrect).length);
-  }, [
-    state?.ts,
-    location.key
-  ]);
+  }, [state?.ts, state?.answers, state?.score, state?.totalQuestions]);
+
+ 
+  function pickDisplayName() {
+    
+    const stateUser =
+      state?.userName ||
+      state?.displayName ||
+      state?.user?.username ||
+      state?.user?.userName ||
+      state?.user?.email;
+
+   
+    let savedObj = null;
+    try {
+      const raw = localStorage.getItem("user");
+      savedObj = raw ? JSON.parse(raw) : null;
+    } catch {}
+
+    const nested = savedObj?.user ?? null;
+
+    const candidates = [
+      stateUser,
+      nested?.username,
+      nested?.userName,
+      nested?.displayName,
+      nested?.name,
+      nested?.email,
+      savedObj?.username,
+      savedObj?.userName,
+      savedObj?.displayName,
+      savedObj?.name,
+      savedObj?.email,
+      localStorage.getItem("loggedInUser"),
+      localStorage.getItem("justRegisteredUser"),
+      localStorage.getItem("username"),
+      localStorage.getItem("userName"),
+      localStorage.getItem("email"),
+    ];
+
+    const found = candidates
+      .map(v => (typeof v === "string" ? v.trim() : ""))
+      .find(v => v.length > 0);
+
+    return found || "Anonym";
+  }
 
   if (!answers.length) {
     return (
-      <div className="final-result-screen content-box">
-        <h2 className="no-results">Inga resultat hittades</h2>
-        <p className="no-results-message">Vänligen slutför ett quiz först.</p>
-        <Link to="/" className="back-link">← Tillbaka till startsidan</Link>
+      <div className="final-page">
+        <div
+          className={`final-bg-layer ${bgLoaded ? "show" : ""}`}
+          style={{ backgroundImage: `url("${BG_URL}")` }}
+          aria-hidden="true"
+        />
+        <div className="final-result-screen content-box">
+          <h2 className="no-results">Inga resultat hittades</h2>
+          <p className="no-results-message">Vänligen slutför ett quiz först.</p>
+          <Link to="/" className="back-link">← Tillbaka till startsidan</Link>
+        </div>
+      
+        <audio ref={audioRef} src="/sounds/forest.mp3" loop preload="auto" />
       </div>
     );
   }
 
   const handleDownloadPdf = async () => {
     try {
+      const userName = pickDisplayName();
+
+      const normalizedAnswers = answers.map(a => ({
+        QuestionId: String(a.questionId ?? a.id ?? ""),
+        Question: String(a.question ?? ""),
+        SelectedAnswer: a.selectedAnswer != null ? String(a.selectedAnswer) : "",
+        UserAnswer: a.userAnswer != null ? String(a.userAnswer) : "",
+        CorrectAnswer: a.correctAnswer != null ? String(a.correctAnswer) : "",
+        IsCorrect: !!a.isCorrect,
+        Type: a.type ?? "mcq",
+      }));
+
       const resultData = {
-        userName: "Anonym",
-        dateTaken: new Date().toISOString(),
-        score: totalCorrect,
-        answers: answers.map(a => ({
-          question: a.question,
-          selectedAnswer: a.selectedAnswer,
-          correctAnswer: a.correctAnswer,
-          isCorrect: a.isCorrect,
-        })),
+        UserName: userName,
+        DateTaken: new Date().toISOString(),
+        Score: totalCorrect,
+        TotalQuestions: total,
+        Answers: normalizedAnswers,
       };
 
       const response = await axios.post(
-        "http://localhost:5249/api/Questions/export-pdf",
+        `${API_BASE}/api/Questions/export-pdf`,
         resultData,
-        { responseType: "blob" }
+        { responseType: "blob", validateStatus: () => true }
       );
 
+      if (response.status < 200 || response.status >= 300) {
+        try {
+          const txt = await response.data.text();
+          console.error(txt);
+          alert(txt || `Fel ${response.status} vid PDF-export.`);
+        } catch {
+          alert(`Fel ${response.status} vid PDF-export.`);
+        }
+        return;
+      }
+
       const blob = new Blob([response.data], { type: "application/pdf" });
-      const link = document.createElement("a");
-      link.href = window.URL.createObjectURL(blob);
-      link.download = "QuizResultat.pdf";
-      link.click();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+
+      const dispo = response.headers?.["content-disposition"] || "";
+      const match = /filename="?([^"]+)"?/.exec(dispo);
+      a.download = match?.[1] || "QuizResultat.pdf";
+
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error("PDF-nedladdning misslyckades", error);
+      alert("Kunde inte skapa PDF just nu.");
     }
   };
 
   return (
-    <div className="final-result-screen content-box">
-      <h1 className="final-title">Slutresultat</h1>
-      <p className="score-summary">
-        Du fick {totalCorrect} av {total} rätt.
-      </p>
+    <div className="final-page">
+     
+      <div
+        className={`final-bg-layer ${bgLoaded ? "show" : ""}`}
+        style={{ backgroundImage: `url("${BG_URL}")` }}
+        aria-hidden="true"
+      />
 
-      <table className="result-table">
-        <thead>
-          <tr>
-            <th>Fråga</th>
-            <th>Ditt svar</th>
-            <th>Korrekt svar</th>
-            <th>Resultat</th>
-          </tr>
-        </thead>
-        <tbody>
-          {answers.map((a, i) => (
-            <tr key={`${a.questionId ?? i}-${i}`}>
-              <td>{a.question}</td>
-              <td>{a.selectedAnswer}</td>
-              <td>{a.correctAnswer}</td>
-              <td>{a.isCorrect ? "Rätt" : "Fel"}</td>
+      <div className="final-result-screen content-box">
+        <h1 className="final-title">Slutresultat</h1>
+        <p className="score-summary">Du fick {totalCorrect} av {total} rätt.</p>
+
+        <table className="result-table">
+          <thead>
+            <tr>
+              <th>Fråga</th>
+              <th>Ditt svar</th>
+              <th>Korrekt svar</th>
+              <th>Resultat</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {answers.map((a, i) => (
+              <tr key={`${a.questionId ?? i}-${i}`}>
+                <td>{a.question}</td>
+                <td>{a.selectedAnswer ?? a.userAnswer ?? ""}</td>
+                <td>{a.correctAnswer ?? ""}</td>
+                <td>{a.isCorrect ? "Rätt" : "Fel"}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
 
-      <button className="download-button" onClick={handleDownloadPdf}>
-        Ladda ner PDF
-      </button>
-
-      <Link to="/" className="back-link">← Tillbaka till startsidan</Link>
+        <button className="download-button" onClick={handleDownloadPdf}>Ladda ner PDF</button>
+        <Link to="/results" className="quiz-button">Visa min historik</Link>
+        <Link to="/" className="back-link">← Tillbaka till startsidan</Link>
+      </div>
+    
+      <audio ref={audioRef} src="/sounds/forest.mp3" loop preload="auto" />
     </div>
   );
-};
-
-export default FinalResultScreen;
-
+}

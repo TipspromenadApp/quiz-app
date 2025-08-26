@@ -17,34 +17,6 @@ namespace backend.Migrations
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.6");
 
-            modelBuilder.Entity("quiz_app.Models.AnswerEntry", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("CorrectAnswer")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Question")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<int?>("QuizResultId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("SelectedAnswer")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("QuizResultId");
-
-                    b.ToTable("AnswerEntries");
-                });
-
             modelBuilder.Entity("quiz_app.Models.Question", b =>
                 {
                     b.Property<int>("Id")
@@ -194,6 +166,47 @@ namespace backend.Migrations
                         });
                 });
 
+            modelBuilder.Entity("quiz_app.Models.QuizAnswer", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("CorrectAnswer")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool?>("IsCorrect")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Question")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("QuestionId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("QuizResultId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Round")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("SelectedAnswer")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Type")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("UserAnswer")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("QuizResultId");
+
+                    b.ToTable("QuizAnswers");
+                });
+
             modelBuilder.Entity("quiz_app.Models.QuizResult", b =>
                 {
                     b.Property<int>("Id")
@@ -207,6 +220,9 @@ namespace backend.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<int>("Score")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("TotalQuestions")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("UserName")
@@ -241,12 +257,15 @@ namespace backend.Migrations
                     b.ToTable("Users");
                 });
 
-            modelBuilder.Entity("quiz_app.Models.AnswerEntry", b =>
+            modelBuilder.Entity("quiz_app.Models.QuizAnswer", b =>
                 {
-                    b.HasOne("quiz_app.Models.QuizResult", null)
+                    b.HasOne("quiz_app.Models.QuizResult", "QuizResult")
                         .WithMany("Answers")
                         .HasForeignKey("QuizResultId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("QuizResult");
                 });
 
             modelBuilder.Entity("quiz_app.Models.QuizResult", b =>

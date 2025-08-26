@@ -1,0 +1,139 @@
+
+.createq-bg{
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background-image:
+  
+    linear-gradient(rgba(0,0,0,0.50), rgba(0,0,0,0.50)),
+    url('/images/forest5.jpg');
+  background-size: cover;
+  background-position: center;
+  opacity: 0;
+  transition: opacity 3600ms ease-in;
+}
+.createq-bg.is-visible{
+ 
+  filter: saturate(0.9) brightness(0.74);
+}
+
+.content-box.create-card.create-question {
+  background: rgba(0,0,0,0.24);                
+  border: 1px solid rgba(255,255,255,0.20);
+  border-radius: 16px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  color: #fff;
+}
+
+.create-question .page-title {
+  color: #fff !important;
+  text-shadow: 0 2px 8px rgba(0,0,0,.35);
+}
+
+.create-question .quiz-button {
+  background: rgba(255,255,255,0.14);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.95);
+  border-radius: 14px;
+  padding: 10px 16px;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  transition: background .18s ease, border-color .18s ease, transform .08s ease;
+}
+.create-question .quiz-button:hover {
+  background: rgba(255,255,255,0.22);
+  border-color: #fff;
+  transform: translateY(-1px);
+}
+
+.create-question .quiz-button.subtle,
+.create-question .remove-btn {
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.85);
+}
+.create-question .quiz-button.subtle:hover,
+.create-question .remove-btn:hover {
+  background: rgba(255,255,255,0.20);
+  border-color: #fff;
+}
+
+.createq-page {
+  position: relative;
+  min-height: 100vh;
+}
+
+.createq-bg {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background-image:
+    linear-gradient(rgba(0,0,0,0.52), rgba(0,0,0,0.52)),
+    url('/images/forest5.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  opacity: 0;
+  transition: opacity 2800ms ease-in;
+  
+  filter: saturate(0.9) brightness(0.74);
+}
+.createq-bg.is-visible { opacity: 1; }
+
+.content-box.create-card.create-question {
+  background: rgba(0,0,0,0.24);
+  border: 1px solid rgba(255,255,255,0.20);
+  border-radius: 16px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 8px 30px rgba(0,0,0,0.30);
+  color: #fff;
+}
+
+.create-question .page-title,
+.page-title { color: #fff !important; text-shadow: 0 2px 8px rgba(0,0,0,.35); }
+
+.create-question .quiz-text-input,
+.create-question input[type="text"],
+.create-question textarea {
+  background: rgba(255,255,255,0.10);
+  border: 1px solid rgba(255,255,255,0.35);
+  color: #fff;
+}
+.create-question .quiz-text-input::placeholder,
+.create-question textarea::placeholder { color: #ddd; }
+.create-question .quiz-text-input:focus,
+.create-question textarea:focus {
+  background: rgba(255,255,255,0.16);
+  outline: none;
+}
+
+.create-question input[type="radio"],
+.create-question input[type="checkbox"] { accent-color: #ffffff; }
+
+.create-question .quiz-button {
+  display: inline-block;
+  margin: 6px 8px 0 0;
+  padding: 10px 16px;
+  background: rgba(255,255,255,0.14);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.95);
+  border-radius: 14px;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  transition: background .18s ease, border-color .18s ease, transform .08s ease;
+}
+.create-question .quiz-button:hover {
+  background: rgba(255,255,255,0.22);
+  border-color: #fff;
+  transform: translateY(-1px);
+}
+
+.alert.success {
+  border: 1px solid #4caf50;
+  background: rgba(76,175,80,0.12);
+  color: #eaffea;
+  padding: 12px;
+  border-radius: 12px;
+  margin-bottom: 16px;
+}

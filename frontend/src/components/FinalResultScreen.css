@@ -1,27 +1,50 @@
+
+.final-page {
+  position: relative;
+  min-height: 100vh;
+  overflow: hidden;
+  font-family: 'Georgia', serif;
+}
+
+.final-bg-layer {
+  position: fixed;
+  inset: 0;
+  background-position: center center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  opacity: 0;
+  transition: opacity 1200ms ease-in;
+  z-index: -1;
+}
+.final-bg-layer.show {
+  opacity: 1;
+}
+
 .final-result-screen {
   max-width: 1000px;
   margin: 60px auto;
-  background-color: rgba(0, 0, 0, 0.6); /* translucent black */
+  background: rgba(0, 0, 0, 0.35); 
+  border: 1px solid rgba(255, 255, 255, 0.35);
   border-radius: 20px;
   padding: 40px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
   text-align: center;
-  font-family: 'Georgia', serif;
-  backdrop-filter: blur(8px);
+  color: #ffffff;
+  backdrop-filter: blur(8px) saturate(120%);
+  -webkit-backdrop-filter: blur(8px) saturate(120%);
   overflow-x: auto;
-  color: white; /* global white text */
 }
 
 .final-result-screen h1 {
   font-size: 2.5rem;
   margin-bottom: 10px;
-  color: white;
+  color: #fff;
 }
 
 .final-result-screen p {
   font-size: 1.2rem;
   margin-bottom: 30px;
-  color: #eee;
+  color: #f0f0f0;
 }
 
 .final-result-screen table {
@@ -29,19 +52,19 @@
   border-collapse: collapse;
   margin-top: 20px;
   font-size: 1rem;
-  color: white;
+  color: #fff;
 }
 
 .final-result-screen th,
 .final-result-screen td {
   padding: 12px 16px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.28);
   text-align: left;
 }
 
 .final-result-screen th {
   font-weight: bold;
-  color: #f5f5f5;
+  color: #f7f7f7;
 }
 
 .button-row {
@@ -69,18 +92,25 @@
   box-shadow: 0 0 6px rgba(255, 255, 255, 0.3);
 }
 
+a.quiz-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 16px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.4);
+  background: transparent;
+  font-weight: 600;
+  line-height: 1;
+  text-decoration: none;
+  color: #fff !important;
+  margin-left: 12px;
+}
+a.quiz-button:hover {
+  background: rgba(255,255,255,0.08);
+  text-decoration: none;
+}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+.content-box {
+  box-sizing: border-box;
+}

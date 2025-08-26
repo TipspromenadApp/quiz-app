@@ -10,16 +10,19 @@ namespace quiz_app
         public DbSet<User> Users { get; set; }
         public DbSet<Question> Questions { get; set; }
         public DbSet<QuizResult> QuizResults { get; set; }
-        public DbSet<AnswerEntry> AnswerEntries { get; set; }
+        public DbSet<QuizAnswer> QuizAnswers { get; set; } 
+       
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            base.OnModelCreating(modelBuilder);
-
-            modelBuilder.Entity<QuizResult>()
-                .HasMany(q => q.Answers)
-                .WithOne()
+           
+            modelBuilder.Entity<QuizAnswer>()
+                .HasOne(a => a.QuizResult)
+                .WithMany(r => r.Answers)
+                .HasForeignKey(a => a.QuizResultId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+
 
             modelBuilder.Entity<Question>().HasData(
                 new Question { Id = 1, Text = "Which of these drinks usually contains caffeine?", Type = "multiple", OptionA = "Orange juice", OptionB = "Water", OptionC = "Tea", OptionD = "Milk", CorrectAnswer = "Tea" },

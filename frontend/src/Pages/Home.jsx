@@ -1,70 +1,81 @@
-import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import "./Home.css";
 
-function Home({ setIsModalOpen }) {
-  
-  const [user, setUser] = useState(null);
+function Home() {
+  const navigate = useNavigate();
+
+  const readUserName = () => {
+    try {
+      const raw = localStorage.getItem("user");
+      if (!raw) return "";
+      const u = JSON.parse(raw);
+      const nested = u?.user ?? {};
+      const candidates = [
+        u?.username, u?.userName, u?.displayName, u?.name, u?.email,
+        nested?.username, nested?.userName, nested?.displayName, nested?.name, nested?.email,
+      ];
+      return (candidates.find(v => typeof v === "string" && v.trim()) || "").trim();
+    } catch { return ""; }
+  };
+
+  const [userName, setUserName] = useState(readUserName());
+  const [bgReady, setBgReady] = useState(false);
 
   useEffect(() => {
-
-    const raw = localStorage.getItem("user");
-    if (!raw) return;
-    try {
-      const u = JSON.parse(raw);
-      const name = (u?.username || u?.email || "").trim();
-      if (name) setUser(name);
-    } catch {
-      
-    }
+    const id = requestAnimationFrame(() => setBgReady(true));
+    return () => cancelAnimationFrame(id);
   }, []);
 
+  
+  useEffect(() => {
+    if (readUserName()) {
+      navigate("/stay-logged-in", { replace: true });
+    }
+  }, [navigate]);
+
+  const goToQuizMode = () => {
+    localStorage.removeItem("pref_quizSource");
+    navigate("/quiz-mode");
+  };
+  const continueFromDashboard = () => navigate("/dashboard");
+  const logout = () => {
+    localStorage.removeItem("user");
+    localStorage.removeItem("pref_quizSource");
+    localStorage.removeItem("pref_keepLoggedIn");
+    setUserName("");
+    navigate("/", { replace: true });
+  };
+
   return (
-    <div className="hero">
-      <div className="overlay">
-        <div className="content">
-          <h1 className="title">Quizutforskare</h1>
-          <p className="subtitle">En stillsam resa för ditt sinne och din själ.</p>
-          <p className="tagline">
-            Ta en promenad. Upptäck nya platser. Känn dig lättare för varje steg.
-          </p>
+    <div className="home-page">
+      <div className={`home-bg ${bgReady ? "is-visible" : ""}`} aria-hidden="true" />
 
-          {user ? (
+      <div className="home-overlay">
+        <div className="home-card">
+          <h1 className="home-title">Quizutforskare</h1>
+          <p className="home-subtitle">Känn dig välkommen – en lugn, varm plats att börja din resa.</p>
+          <p className="home-tagline">Ta en promenad. Upptäck nya platser. Känn dig lättare för varje steg.</p>
+
+          
+          {userName ? (
             <>
-              <h2>Välkommen tillbaka, {user}!</h2>
-              <div className="primary-button">
-                <Link to="/quiz">
-                  <button>Spela igen</button>
-                </Link>
+              <h2 className="home-welcome">Välkommen tillbaka, {userName}!</h2>
+              <div className="button-row">
+                <button className="frosty-btn" onClick={goToQuizMode}>Spela igen</button>
+                <button className="frosty-btn" onClick={continueFromDashboard}>Fortsätt där du slutade</button>
+                <button className="frosty-btn" onClick={logout}>Logga ut</button>
               </div>
-              <div className="secondary-buttons">
-               <Link to="/dashboard">
-  <button>Fortsätt där du slutade</button>
-</Link>
-
-                <button
-                  onClick={() => {
-                   
-                    localStorage.removeItem("user");
-                    setUser(null);
-                  }}
-                >
-                  Logga ut
-                </button>
+              <div className="keep-line">
+                <Link to="/stay-logged-in" className="keep-link">✓ Håll mig inloggad</Link>
               </div>
             </>
           ) : (
-            <>
-              <div className="primary-button">
-                <Link to="/quiz">
-                  <button>Ge dig ut på en solopromenad</button>
-                </Link>
-              </div>
-              <div className="secondary-buttons">
-                <Link to="/about"><button>Så fungerar det</button></Link>
-                <Link to="/login"><button>Logga in</button></Link>
-                <Link to="/register"><button>Registrera dig</button></Link>
-              </div>
-            </>
+            <div className="button-row">
+              <Link to="/about"><button className="frosty-btn">Så fungerar det</button></Link>
+              <Link to="/login"><button className="frosty-btn">Logga in</button></Link>
+              <Link to="/register"><button className="frosty-btn">Registrera dig</button></Link>
+            </div>
           )}
         </div>
       </div>
@@ -85,4 +96,3 @@ function Home({ setIsModalOpen }) {
 }
 
 export default Home;
-

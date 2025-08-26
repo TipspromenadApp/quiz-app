@@ -6,7 +6,7 @@ const ResultScreen = ({ score, total = 10 }) => {
   const [displayScore, setDisplayScore] = useState(0);
   const navigate = useNavigate();
 
-  // Animate score count-up
+
   useEffect(() => {
     const interval = setInterval(() => {
       setDisplayScore(prev => {
@@ -19,7 +19,7 @@ const ResultScreen = ({ score, total = 10 }) => {
     return () => clearInterval(interval);
   }, [score]);
 
-  // Redirect to final result screen after 2 seconds
+
   useEffect(() => {
     const timeout = setTimeout(() => {
       navigate("/final-result");
