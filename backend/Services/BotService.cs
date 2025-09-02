@@ -1,5 +1,8 @@
-using System.Text.Json.Serialization;
+using System;
 using System.Linq;
+using System.Text;                     // ⬅️ needed for NormalizationForm
+using System.Globalization;            // ⬅️ for CharUnicodeInfo
+using System.Text.Json.Serialization;
 
 public class BotService
 {
@@ -10,18 +13,35 @@ public class BotService
         ["hard"]   = (0.90, 700),
     };
 
+    // Normalize (lower, trim, strip diacritics) so "Solljus" == "solljus"
+    private static string Norm(string? s)
+    {
+        if (string.IsNullOrWhiteSpace(s)) return "";
+        var formD = s.Trim().ToLowerInvariant().Normalize(NormalizationForm.FormD);
+        var noMarks = formD.Where(c => CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark);
+        return new string(noMarks.ToArray()).Normalize(NormalizationForm.FormC);
+    }
+
     public MoveResponse Decide(MoveRequest r)
     {
         var key = (r.Difficulty ?? "normal").ToLowerInvariant();
         var (acc, baseDeadline) = _cfg.TryGetValue(key, out var c) ? c : _cfg["normal"];
 
         var options = r.Options ?? Array.Empty<string>();
+
         int seed = HashCode.Combine(r.QuestionId ?? "", string.Join("|", options), DateTime.UtcNow.Ticks);
         var rng = new Random(seed);
 
+        // Robust correct index lookup (case/diacritic insensitive)
         int correctIdx = -1;
         if (!string.IsNullOrWhiteSpace(r.CorrectAnswer) && options.Length > 0)
-            correctIdx = Array.IndexOf(options, r.CorrectAnswer);
+        {
+            var want = Norm(r.CorrectAnswer);
+            for (int i = 0; i < options.Length; i++)
+            {
+                if (Norm(options[i]) == want) { correctIdx = i; break; }
+            }
+        }
 
         bool pickCorrect = correctIdx >= 0 && rng.NextDouble() < acc;
 
@@ -39,28 +59,32 @@ public class BotService
         int jitter = rng.Next(-120, 160);
         int decideInMs = Math.Max(200, baseDeadline + jitter);
 
+        var chosenText = (answerIdx >= 0 && answerIdx < options.Length) ? options[answerIdx] : null;
+
         return new MoveResponse
         {
             AnswerIndex = answerIdx,
-            DecideInMs = decideInMs,
-            IsCorrect = correctIdx >= 0 && answerIdx == correctIdx,
-            Seed = seed
+            AnswerText  = chosenText,                          // ⬅️ helps the client score locally
+            DecideInMs  = decideInMs,
+            IsCorrect   = (correctIdx >= 0 && answerIdx == correctIdx),
+            Seed        = seed
         };
     }
 }
 
 public class MoveRequest
 {
-    [JsonPropertyName("questionId")] public string? QuestionId { get; set; }
-    [JsonPropertyName("options")] public string[]? Options { get; set; }
-    [JsonPropertyName("difficulty")] public string? Difficulty { get; set; } // "easy"|"normal"|"hard"
-    [JsonPropertyName("correctAnswer")] public string? CorrectAnswer { get; set; } // optional
+    [JsonPropertyName("questionId")]   public string?  QuestionId    { get; set; }
+    [JsonPropertyName("options")]      public string[]? Options      { get; set; }
+    [JsonPropertyName("difficulty")]   public string?  Difficulty    { get; set; } // "easy"|"normal"|"hard"
+    [JsonPropertyName("correctAnswer")]public string?  CorrectAnswer { get; set; } // optional
 }
 
 public class MoveResponse
 {
-    [JsonPropertyName("answerIndex")] public int AnswerIndex { get; set; }
-    [JsonPropertyName("decideInMs")] public int DecideInMs { get; set; }
-    [JsonPropertyName("isCorrect")] public bool IsCorrect { get; set; }
-    [JsonPropertyName("seed")] public int Seed { get; set; }
+    [JsonPropertyName("answerIndex")]  public int     AnswerIndex { get; set; }
+    [JsonPropertyName("answerText")]   public string? AnswerText  { get; set; }   
+    [JsonPropertyName("decideInMs")]   public int     DecideInMs  { get; set; }
+    [JsonPropertyName("isCorrect")]    public bool    IsCorrect   { get; set; }
+    [JsonPropertyName("seed")]         public int     Seed        { get; set; }
 }

@@ -10,33 +10,120 @@ namespace quiz_app
         public DbSet<User> Users { get; set; }
         public DbSet<Question> Questions { get; set; }
         public DbSet<QuizResult> QuizResults { get; set; }
-        public DbSet<QuizAnswer> QuizAnswers { get; set; } 
-       
+        public DbSet<QuizAnswer> QuizAnswers { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-           
+            // Relations
             modelBuilder.Entity<QuizAnswer>()
                 .HasOne(a => a.QuizResult)
                 .WithMany(r => r.Answers)
                 .HasForeignKey(a => a.QuizResultId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-
-
+            // Seedade frågor på svenska
             modelBuilder.Entity<Question>().HasData(
-                new Question { Id = 1, Text = "Which of these drinks usually contains caffeine?", Type = "multiple", OptionA = "Orange juice", OptionB = "Water", OptionC = "Tea", OptionD = "Milk", CorrectAnswer = "Tea" },
-                new Question { Id = 2, Text = "What is sushi traditionally wrapped in?", Type = "multiple", OptionA = "Seaweed", OptionB = "Lettuce", OptionC = "Rice paper", OptionD = "Plastic", CorrectAnswer = "Seaweed" },
-                new Question { Id = 3, Text = "Which of these is a common way to reduce stress?", Type = "multiple", OptionA = "Listening to calming music", OptionB = "Eating more sugar", OptionC = "Skipping sleep", OptionD = "Arguing online", CorrectAnswer = "Listening to calming music" },
-                new Question { Id = 4, Text = "What do bees produce?", Type = "multiple", OptionA = "Honey", OptionB = "Butter", OptionC = "Oil", OptionD = "Milk", CorrectAnswer = "Honey" },
-                new Question { Id = 5, Text = "Which of these is considered a fruit?", Type = "multiple", OptionA = "Apple", OptionB = "Lettuce", OptionC = "Carrot", OptionD = "Broccoli", CorrectAnswer = "Apple" },
-                new Question { Id = 6, Text = "Which country is famous for the Eiffel Tower?", Type = "multiple", OptionA = "France", OptionB = "Italy", OptionC = "Germany", OptionD = "Spain", CorrectAnswer = "France" },
-                new Question { Id = 7, Text = "What do you use to send an email?", Type = "multiple", OptionA = "Computer", OptionB = "Microwave", OptionC = "Television", OptionD = "Oven", CorrectAnswer = "Computer" },
-                new Question { Id = 8, Text = "What helps plants grow?", Type = "multiple", OptionA = "Sunlight", OptionB = "Darkness", OptionC = "Plastic", OptionD = "Smoke", CorrectAnswer = "Sunlight" },
-                new Question { Id = 9, Text = "Which one is a musical instrument?", Type = "multiple", OptionA = "Guitar", OptionB = "Plate", OptionC = "Chair", OptionD = "Spoon", CorrectAnswer = "Guitar" },
-                new Question { Id = 10, Text = "What is a common breakfast food?", Type = "multiple", OptionA = "Cereal", OptionB = "Pizza", OptionC = "Steak", OptionD = "Popcorn", CorrectAnswer = "Cereal" }
+                new Question {
+                    Id = 1,
+                    Text = "Vilken av dessa drycker innehåller vanligtvis koffein?",
+                    Type = "multiple",
+                    OptionA = "Apelsinjuice",
+                    OptionB = "Vatten",
+                    OptionC = "Te",
+                    OptionD = "Mjölk",
+                    CorrectAnswer = "Te"
+                },
+                new Question {
+                    Id = 2,
+                    Text = "Vad är sushi traditionellt inlindad i?",
+                    Type = "multiple",
+                    OptionA = "Sjögräs",
+                    OptionB = "Sallad",
+                    OptionC = "Rispapper",
+                    OptionD = "Plast",
+                    CorrectAnswer = "Sjögräs"
+                },
+                new Question {
+                    Id = 3,
+                    Text = "Vilket av följande är ett vanligt sätt att minska stress?",
+                    Type = "multiple",
+                    OptionA = "Lyssna på lugn musik",
+                    OptionB = "Äta mer socker",
+                    OptionC = "Hoppa över sömn",
+                    OptionD = "Bråka på nätet",
+                    CorrectAnswer = "Lyssna på lugn musik"
+                },
+                new Question {
+                    Id = 4,
+                    Text = "Vad producerar bin?",
+                    Type = "multiple",
+                    OptionA = "Honung",
+                    OptionB = "Smör",
+                    OptionC = "Olja",
+                    OptionD = "Mjölk",
+                    CorrectAnswer = "Honung"
+                },
+                new Question {
+                    Id = 5,
+                    Text = "Vilken av dessa räknas som en frukt?",
+                    Type = "multiple",
+                    OptionA = "Äpple",
+                    OptionB = "Sallad",
+                    OptionC = "Morot",
+                    OptionD = "Broccoli",
+                    CorrectAnswer = "Äpple"
+                },
+                new Question {
+                    Id = 6,
+                    Text = "Vilket land är känt för Eiffeltornet?",
+                    Type = "multiple",
+                    OptionA = "Frankrike",
+                    OptionB = "Italien",
+                    OptionC = "Tyskland",
+                    OptionD = "Spanien",
+                    CorrectAnswer = "Frankrike"
+                },
+                new Question {
+                    Id = 7,
+                    Text = "Vad använder du för att skicka e-post?",
+                    Type = "multiple",
+                    OptionA = "Dator",
+                    OptionB = "Mikrovågsugn",
+                    OptionC = "TV",
+                    OptionD = "Ugn",
+                    CorrectAnswer = "Dator"
+                },
+                new Question {
+                    Id = 8,
+                    Text = "Vad hjälper växter att växa?",
+                    Type = "multiple",
+                    OptionA = "Solljus",
+                    OptionB = "Mörker",
+                    OptionC = "Plast",
+                    OptionD = "Rök",
+                    CorrectAnswer = "Solljus"
+                },
+                new Question {
+                    Id = 9,
+                    Text = "Vilken av följande är ett musikinstrument?",
+                    Type = "multiple",
+                    OptionA = "Gitarr",
+                    OptionB = "Tallrik",
+                    OptionC = "Stol",
+                    OptionD = "Sked",
+                    CorrectAnswer = "Gitarr"
+                },
+                new Question {
+                    Id = 10,
+                    Text = "Vad är en vanlig frukostmat?",
+                    Type = "multiple",
+                    OptionA = "Flingor",
+                    OptionB = "Pizza",
+                    OptionC = "Biff",
+                    OptionD = "Popcorn",
+                    CorrectAnswer = "Flingor"
+                }
             );
         }
     }
 }
-

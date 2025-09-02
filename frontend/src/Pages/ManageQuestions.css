@@ -1,0 +1,111 @@
+.manage-page {
+  position: relative;
+  min-height: 100vh;
+  color: #f4f4f4;
+}
+
+/* Background */
+.manage-bg {
+  position: fixed;
+  inset: 0;
+  background: url("/images/forest9.jpg") center/cover no-repeat;
+  opacity: 0;
+  transition: opacity 4s ease; 
+  z-index: -2;
+}
+.manage-bg.is-visible { opacity: 1; }
+.manage-vignette {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.35);
+  z-index: -1;
+}
+.manage-container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 40px 24px;
+  background: rgba(40,40,40,0.35); 
+  backdrop-filter: blur(10px);
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.1);
+  box-shadow: 0 6px 24px rgba(0,0,0,0.25);
+  text-align: center;
+}
+td.q-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-start;
+  align-items: center;
+  width: 220px;
+  white-space: nowrap;
+}
+.manage-container h1 {
+  font-size: 32px;
+  margin-bottom: 6px;
+}
+.subtitle {
+  margin-bottom: 22px;
+  opacity: 0.9;
+}
+.empty {
+  opacity: 0.85;
+}
+
+.question-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 24px;
+}
+.question-table th,
+.question-table td {
+  padding: 12px 10px;
+  text-align: left;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+.question-table th {
+  font-weight: 600;
+  opacity: 0.9;
+}
+.q-text {
+  font-weight: 600;
+}
+.q-meta {
+  font-size: 13px;
+  opacity: 0.85;
+  line-height: 1.4;
+}
+.q-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.btn {
+  appearance: none;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.2);
+  color: #fff;
+  padding: 7px 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.2s, border-color 0.2s;
+}
+.btn:hover { background: rgba(255,255,255,0.15); }
+.btn.primary {
+  background: rgba(160,160,255,0.2);
+  border-color: rgba(160,160,255,0.4);
+}
+.btn.primary:hover { background: rgba(160,160,255,0.3); }
+.btn.danger {
+  border-color: rgba(255,120,120,0.4);
+  background: rgba(255,80,80,0.15);
+}
+.btn.danger:hover {
+  background: rgba(255,80,80,0.25);
+}
+.footer-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}

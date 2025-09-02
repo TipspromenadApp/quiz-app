@@ -97,6 +97,46 @@ async function fetchGeneralQuestions(roundNumber) {
 
 const WALK_THRESHOLDS = { "0.5": 5, "1": 10 };
 
+// local history helper so Results page can show “Mot bot”
+function pushLocalHistory({ answersAll, rounds, botScore, botName }) {
+  try {
+    const score = answersAll.filter((a) => a.isCorrect).length;
+    const entry = {
+      id: crypto?.randomUUID?.() || String(Date.now()),
+      mode: "bot",
+      rounds,
+      finishedAt: new Date().toISOString(),
+      totalQuestions: answersAll.length,
+      score,
+      answers: answersAll,
+      botScore: Number.isFinite(botScore) ? botScore : 0,
+      botName: botName || "Bot",
+    };
+    const sig = JSON.stringify({
+      m: "bot",
+      s: score,
+      t: entry.totalQuestions,
+      q: answersAll.map((a) => [
+        a?.questionId ?? a?.id ?? null,
+        a?.selectedAnswer ?? a?.userAnswer ?? null,
+        !!a?.isCorrect,
+      ]),
+      bs: entry.botScore,
+      bn: entry.botName,
+    });
+    entry._sig = btoa(unescape(encodeURIComponent(sig))).slice(0, 80);
+
+    const arr = JSON.parse(localStorage.getItem("quizHistory") || "[]");
+    if (!arr.length || arr[0]?._sig !== entry._sig) {
+      arr.unshift(entry);
+      localStorage.setItem("quizHistory", JSON.stringify(arr.slice(0, 100)));
+    }
+    localStorage.setItem("lastMode", "bot");
+  } catch (e) {
+    console.warn("Failed to push local history (bot):", e);
+  }
+}
+
 export default function BotQuiz() {
   const navigate = useNavigate();
   const reactLocation = useLocation();
@@ -120,6 +160,9 @@ export default function BotQuiz() {
   const [allAnswers, setAllAnswers] = useState([]);
   const [textInput, setTextInput] = useState("");
 
+  // keep every bot answer (for FinalResult + PDF)
+  const [botAllAnswers, setBotAllAnswers] = useState([]);
+
   const [bgReady, setBgReady] = useState(false);
   const audioRef = useRef(null);
 
@@ -128,7 +171,6 @@ export default function BotQuiz() {
     return () => cancelAnimationFrame(id);
   }, []);
 
- 
   useEffect(() => {
     const el = audioRef.current;
     if (!el) return;
@@ -151,9 +193,8 @@ export default function BotQuiz() {
       window.removeEventListener("keydown", unlock);
       el.pause();
     };
-  }, []); 
+  }, []);
 
-  // Difficulty & prefs
   const [difficulty, setDifficulty] = useState(() =>
     navState.difficulty || localStorage.getItem("pref_bot_difficulty") || "normal"
   );
@@ -201,7 +242,10 @@ export default function BotQuiz() {
   useEffect(() => () => { stopTracking(); }, [stopTracking]);
 
   const showingQuestion =
-    quizStarted && !showAffirmation && shuffledQuestions.length > 0 && (!walkMode || !waitingForWalk);
+    !!quizStarted &&
+    !showAffirmation &&
+    shuffledQuestions.length > 0 &&
+    (!walkMode || !waitingForWalk);
 
   function prepareQuestion(q) {
     const copy = { ...q };
@@ -239,6 +283,9 @@ export default function BotQuiz() {
   const [botScore, setBotScore] = useState(0);
   const [botAnswer, setBotAnswer] = useState(null);
   const [botIsCorrect, setBotIsCorrect] = useState(false);
+  const botIsCorrectRef = useRef(false);
+  useEffect(() => { botIsCorrectRef.current = botIsCorrect; }, [botIsCorrect]);
+
   const [botThinking, setBotThinking] = useState(false);
 
   const [playerAnsweredAt, setPlayerAnsweredAt] = useState(null);
@@ -248,13 +295,14 @@ export default function BotQuiz() {
   const playerAnsweredAtRef = useRef(null);
   const botAnsweredAtRef = useRef(null);
   const finalizedRef = useRef(false);
+  const navigatedRef = useRef(false);
+
   useEffect(() => { playerAnsweredAtRef.current = playerAnsweredAt; }, [playerAnsweredAt]);
   useEffect(() => { botAnsweredAtRef.current = botAnsweredAt; }, [botAnsweredAt]);
 
   const resetPerQuestion = () => {
     setSelectedAnswer(null); setShowResult(false); setIsCorrect(false); setTextInput("");
     setBotAnswer(null); setBotIsCorrect(false);
-    setBotThinking(true);
     setPlayerAnsweredAt(null); playerAnsweredAtRef.current = null;
     setBotAnsweredAt(null);    botAnsweredAtRef.current = null;
     setPendingRecord(null);
@@ -279,6 +327,8 @@ export default function BotQuiz() {
     setAllAnswers([]);
     setWaitingForWalk(false); stopTracking(); reset();
     setBotScore(0); setBotAnswer(null); setBotIsCorrect(false);
+    setBotAllAnswers([]);
+    navigatedRef.current = false;
     resetPerQuestion();
   };
 
@@ -309,14 +359,39 @@ export default function BotQuiz() {
     difficulty,
     enable: !!currentQuestion && showingQuestion,
     onThinkingChange: setBotThinking,
-    onRevealed: ({ answerIndex, isCorrect }) => {
+
+    onRevealed: (payload) => {
       const q = currentQuestion; if (!q) return;
-      const answerText = isTextQuestion(q) ? "" : (q.options?.[answerIndex] ?? "");
+
+      const { answerIndex, answerText } = (payload || {});
+      const correctText = getCorrectAnswerText(q);
+
+      let pickedText = typeof answerText === "string"
+        ? answerText
+        : (!isTextQuestion(q) && typeof answerIndex === "number" && Array.isArray(q.options)
+            ? q.options[answerIndex] ?? null
+            : null);
+
+      const finalIsCorrect = isTextQuestion(q)
+        ? (pickedText ? isTextCorrect(pickedText, q) : false)
+        : (pickedText != null && correctText != null && pickedText === correctText);
+
+      // tiny bonus to make bot feel smarter sometimes
+      const SMARTNESS_BONUS = { easy: 0.45, normal: 0.45, hard: 0.45 };
+      let adjustedIsCorrect = finalIsCorrect;
+      if (!finalIsCorrect) {
+        const bonus = SMARTNESS_BONUS[difficulty] ?? 0.1;
+        if (Math.random() < bonus && typeof correctText === "string" && correctText.trim()) {
+          adjustedIsCorrect = true;
+          pickedText = correctText;
+        }
+      }
+
       setBotThinking(true);
       const delay = nextDelayMs();
       setTimeout(() => {
-        setBotAnswer(answerText);
-        setBotIsCorrect(!!isCorrect);
+        setBotAnswer(pickedText ?? "");
+        setBotIsCorrect(adjustedIsCorrect);
         const ts = Date.now();
         setBotAnsweredAt(ts);
         if (playerAnsweredAtRef.current == null) submitTimeoutLoss(q, ts);
@@ -377,17 +452,46 @@ export default function BotQuiz() {
     if (finalizedRef.current) return;
     finalizedRef.current = true;
 
+    const q = shuffledQuestions[currentQuestionIndex];
+    const textMode = isTextQuestion(q);
+    const correctAnswerText = getCorrectAnswerText(q);
+
     const userCorrect = pendingRecord.isCorrect;
-    const botCorrect  = botIsCorrect;
+    const botCorrect  = botIsCorrectRef.current;
 
-    let userPoint = 0, botPoint = 0;
-    if (userCorrect && botCorrect) {
-      if ((playerAnsweredAt ?? Infinity) <= (botAnsweredAtRef.current ?? Infinity)) userPoint = 1;
-      else botPoint = 1;
-    } else if (userCorrect) userPoint = 1;
-    else if (botCorrect) botPoint = 1;
+    let nextUserScoreVal = 0;
+    let nextBotScoreVal  = 0;
 
-    const nextUserAnswers = [...userAnswers, pendingRecord];
+    setScore((s) => {
+      nextUserScoreVal = s + (userCorrect ? 1 : 0);
+      return nextUserScoreVal;
+    });
+    setBotScore((s) => {
+      nextBotScoreVal = s + (botCorrect ? 1 : 0);
+      return nextBotScoreVal;
+    });
+
+    // merge bot's answer into the saved user record
+    const finalRecord = {
+      ...pendingRecord,
+      botAnswer: typeof botAnswer === "string" ? botAnswer : (botAnswer ?? ""),
+      botIsCorrect: !!botCorrect,
+    };
+
+    // also keep a parallel bot record list (optional)
+    const botRecord = {
+      round: currentRound,
+      questionId: q.id,
+      question: q.text ?? q.question ?? "",
+      selectedAnswer: textMode ? null : (botAnswer ?? null),
+      userAnswer: textMode ? (botAnswer ?? "") : null,
+      correctAnswer: correctAnswerText,
+      isCorrect: botCorrect,
+      type: textMode ? "text" : q.type ?? "mcq",
+    };
+
+    const nextUserAnswers = [...userAnswers, finalRecord];
+    const nextBotAnswers  = [...botAllAnswers, botRecord];
     const answersThisRound = nextUserAnswers.slice(-questionsPerRound);
 
     const isLastQuestion = currentQuestionIndex >= shuffledQuestions.length - 1;
@@ -395,8 +499,7 @@ export default function BotQuiz() {
     const isLastRound = roundNumber >= rounds;
 
     setUserAnswers(nextUserAnswers);
-    setScore((s) => s + userPoint);
-    setBotScore((s) => s + botPoint);
+    setBotAllAnswers(nextBotAnswers);
 
     if (isTextQuestion(shuffledQuestions[currentQuestionIndex])) setTextInput("");
 
@@ -411,19 +514,48 @@ export default function BotQuiz() {
       await saveRoundResult(roundNumber, roundScore, questionsPerRound, answersThisRound);
 
       const updatedAll = [...allAnswers, ...answersThisRound];
+      const updatedBotAll = [...botAllAnswers, botRecord];
       setAllAnswers(updatedAll);
-      localStorage.setItem("finalAnswers", JSON.stringify(updatedAll));
-      localStorage.setItem("finalScore", String(updatedAll.filter((a) => a.isCorrect).length));
+      setBotAllAnswers(updatedBotAll);
+
+      const playerTotal = updatedAll.filter((a) => a.isCorrect).length;
+      const finalPayload = {
+        answers: updatedAll,                // per-row now includes botAnswer & botIsCorrect
+        totalQuestions: updatedAll.length,
+        score: playerTotal,
+        gameMode: "bot",
+        botName: botName || "Bot Jonas",
+        botScore: nextBotScoreVal,
+        botAnswers: updatedBotAll,         // optional parallel list
+        ts: Date.now(),
+      };
+
+      try {
+        localStorage.setItem("finalPayload", JSON.stringify(finalPayload));
+        localStorage.setItem("finalAnswers", JSON.stringify(updatedAll));
+        localStorage.setItem("finalScore", String(playerTotal));
+        localStorage.setItem("finalTotal", String(updatedAll.length));
+        localStorage.setItem("gameMode", "bot");
+        localStorage.setItem("botName", finalPayload.botName);
+        localStorage.setItem("botScore", String(finalPayload.botScore));
+        localStorage.setItem("botTotalScore", String(finalPayload.botScore));
+        localStorage.setItem("finalBotAnswers", JSON.stringify(updatedBotAll));
+        localStorage.setItem("finalBotScore", String(finalPayload.botScore));
+      } catch {}
+
+      // store in local history as a bot match (so “Mot bot” shows in Results)
+      pushLocalHistory({
+        answersAll: updatedAll,
+        rounds: Number(rounds),
+        botScore: nextBotScoreVal,
+        botName: finalPayload.botName,
+      });
 
       if (isLastRound) {
-        navigate("/final-result", {
-          state: {
-            answers: updatedAll,
-            totalQuestions: updatedAll.length,
-            score: updatedAll.filter((a) => a.isCorrect).length,
-            ts: Date.now(),
-          },
-        });
+        if (!navigatedRef.current) {
+          navigatedRef.current = true;
+          navigate("/final-result", { state: finalPayload });
+        }
       } else {
         setQuizFinished(true);
         setShowAffirmation(true);
@@ -433,6 +565,7 @@ export default function BotQuiz() {
         resetPerQuestion();
       }
     }, 800);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pendingRecord, playerAnsweredAt, botAnsweredAt]);
 
   async function loadNextRoundQuestions(nextRound) {
@@ -478,6 +611,7 @@ export default function BotQuiz() {
         CorrectAnswer: a.correctAnswer != null ? String(a.correctAnswer) : "",
         IsCorrect: !!a.isCorrect,
         Type: a.type ?? "mcq",
+        // NOTE: not sending bot fields to this endpoint to avoid server breakage
       }));
       const req = {
         UserName, RoundNumber: roundNumber, TotalQuestions: questionCount, Score: roundScore,
@@ -494,11 +628,8 @@ export default function BotQuiz() {
 
   return (
     <div className="bot-page">
-     
       <div className={`bot-bg ${bgReady ? "is-visible" : ""}`} aria-hidden="true" />
-
       <audio ref={audioRef} src="/sounds/sea.mp3" loop preload="auto" playsInline />
-
       <div className="frosty-container">
         <h1 className="title">Spela med <span className="bot-name">{botName}</span></h1>
 
@@ -604,14 +735,14 @@ export default function BotQuiz() {
             <div style={{ display: "flex", gap: 12, justifyContent: "center", marginTop: 8 }}>
               {IS_DEV && (
                 <button className="quiz-button" type="button" onClick={() => { reset(); startDistance(WALK_THRESHOLDS[uiThreshold] ?? 5); simulate(1); }}>
-                  +1 m (simulera)
+                  +1 m (test)
                 </button>
               )}
               <button className="quiz-button" type="button" onClick={() => { setWaitingForWalk(false); stopTracking(); }}>
-                Avbryt gång
+                Avbryt steg
               </button>
               <button className="quiz-button" type="button" onClick={() => { setWaitingForWalk(false); stopTracking(); proceedToNextQuestion(); }}>
-                Kan inte få plats? Fortsätt
+                Fortsätt utan att gå
               </button>
             </div>
           </div>
@@ -625,7 +756,7 @@ export default function BotQuiz() {
               Ställning – Du: {score} • {botName}: {botScore}
               {!playerAnsweredAt && !botAnsweredAt && botThinking && (
                 <span style={{ marginLeft: 10, fontStyle: "italic", opacity: 0.85 }}>
-                  {botName} tänker{"." .repeat(dots)}
+                  {botName} tänker{".".repeat(dots)}
                 </span>
               )}
             </div>
@@ -662,11 +793,35 @@ export default function BotQuiz() {
               Hoppa över →
             </button>
 
-            {showResult && showCorrect && (
+            {/* RESULT BLOCK: your result + bot's answer */}
+            {showResult && (
               <div className="result">
-                <p style={{ color: isCorrect ? "green" : "red" }}>
-                  {isCorrect ? "Rätt!" : `Fel. Rätt svar är: ${getCorrectAnswerText(shuffledQuestions[currentQuestionIndex])}`}
-                </p>
+                {/* Your result (only if "Visa rätt svar" is on) */}
+                {showCorrect && (
+                  <p style={{ color: isCorrect ? "green" : "red" }}>
+                    {isCorrect
+                      ? "Rätt!"
+                      : `Fel. Rätt svar är: ${getCorrectAnswerText(shuffledQuestions[currentQuestionIndex])}`}
+                  </p>
+                )}
+
+                {/* Bot result */}
+                <div style={{ marginTop: 6, opacity: 0.95 }}>
+                  {typeof botAnsweredAt === "number" ? (
+                    <p>
+                      <strong>{botName}</strong> svarade:{" "}
+                      <em>{botAnswer && String(botAnswer).trim() ? botAnswer : "—"}</em>{" "}
+                      <span style={{ color: botIsCorrect ? "green" : "red" }}>
+                        {botIsCorrect ? "Rätt!" : "Fel"}
+                      </span>
+                      {!botIsCorrect && showCorrect && (
+                        <> — Rätt svar: {getCorrectAnswerText(shuffledQuestions[currentQuestionIndex])}</>
+                      )}
+                    </p>
+                  ) : (
+                    <p style={{ fontStyle: "italic" }}>{botName} tänker…</p>
+                  )}
+                </div>
               </div>
             )}
           </div>

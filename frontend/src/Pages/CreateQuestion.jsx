@@ -1,7 +1,12 @@
-
 import React, { useState, useEffect, useRef } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import "./CreateQuestion.css";
+import {
+  addUserQuestion,
+  updateUserQuestion,
+  getUserQuestionById,
+  clearUserQuestions as clearAll,
+} from "../lib/userQuestions";
 
 export default function CreateQuestion() {
   const [text, setText] = useState("");
@@ -12,9 +17,28 @@ export default function CreateQuestion() {
   const [error, setError] = useState("");
   const [saved, setSaved] = useState(false);
 
-
   const [bgReady, setBgReady] = useState(false);
   const audioRef = useRef(null);
+  const [params] = useSearchParams();
+  const navigate = useNavigate();
+
+  const editingId = params.get("id");
+  const isEditing = Boolean(editingId);
+
+  useEffect(() => {
+    if (!isEditing) return;
+    const q = getUserQuestionById(editingId);
+    if (!q) return;
+    setText(q.text || "");
+    setType(q.type === "text" ? "text" : "mcq");
+    if (q.type === "mcq") {
+      setOptions(q.options?.length ? q.options : ["", "", "", ""]);
+      const idx = Math.max(0, (q.options || []).indexOf(q.correctAnswer));
+      setCorrectIndex(idx === -1 ? 0 : idx);
+    } else {
+      setSampleAnswer(q.sampleAnswer || "");
+    }
+  }, [isEditing, editingId]);
 
   useEffect(() => {
     const id = requestAnimationFrame(() => setBgReady(true));
@@ -24,14 +48,11 @@ export default function CreateQuestion() {
   useEffect(() => {
     const el = audioRef.current;
     if (!el) return;
-
     el.volume = 0.12;
-    el.muted = true;  
+    el.muted = true;
     el.loop = true;
-
     const tryPlay = () => el.play().catch(() => {});
     tryPlay();
-
     const unlock = () => {
       el.muted = false;
       tryPlay();
@@ -40,11 +61,9 @@ export default function CreateQuestion() {
       document.removeEventListener("visibilitychange", onVis);
     };
     const onVis = () => { if (!document.hidden) unlock(); };
-
     window.addEventListener("pointerdown", unlock, { once: true });
     window.addEventListener("keydown", unlock, { once: true });
     document.addEventListener("visibilitychange", onVis);
-
     return () => {
       window.removeEventListener("pointerdown", unlock);
       window.removeEventListener("keydown", unlock);
@@ -53,84 +72,75 @@ export default function CreateQuestion() {
     };
   }, []);
 
-  function saveToLocalStorage(q) {
-    const key = "customQuestions";
-    const existing = JSON.parse(localStorage.getItem(key) || "[]");
-    existing.push(q);
-    localStorage.setItem(key, JSON.stringify(existing));
-  }
-
-  function handleAddOption() {
-    setOptions((prev) => [...prev, ""]);
-  }
+  function handleAddOption() { setOptions((p) => [...p, ""]); }
   function handleRemoveOption(i) {
-    setOptions((prev) => prev.filter((_, idx) => idx !== i));
-    if (correctIndex >= options.length - 1) setCorrectIndex(0);
+    setOptions((p) => p.filter((_, idx) => idx !== i));
+    setCorrectIndex((ci) => (ci >= i ? 0 : ci));
   }
   function handleOptionChange(i, value) {
-    setOptions((prev) => prev.map((opt, idx) => (idx === i ? value : opt)));
+    setOptions((p) => p.map((opt, idx) => (idx === i ? value : opt)));
   }
 
   function validate() {
     if (!text.trim()) return "Skriv frågetext.";
     if (type === "mcq") {
-      const filled = options.map((o) => o.trim()).filter(Boolean);
+      const cleaned = options.map((o) => o.trim());
+      const filled = cleaned.filter(Boolean);
       if (filled.length < 2) return "Minst två svarsalternativ behövs.";
-      if (!filled[correctIndex]) return "Välj en korrekt MCQ-svarsruta.";
+      if (!cleaned[correctIndex]) return "Markera en ifylld rad som korrekt.";
     }
     return "";
   }
 
   function clearAllCustomQuestions() {
     if (!confirm("Rensa alla egna frågor?")) return;
-    localStorage.removeItem("customQuestions");
-    alert("Rensat. Starta quiz igen!");
+    clearAll();
+    alert("Rensat.");
   }
 
   function handleSubmit(e) {
     e.preventDefault();
     const err = validate();
-    if (err) {
-      setError(err);
-      setSaved(false);
-      return;
-    }
+    if (err) { setError(err); setSaved(false); return; }
     setError("");
 
-    const q = {
-      id: Date.now().toString(),
+    const base = {
+      id: isEditing ? editingId : Date.now().toString(),
       text: text.trim(),
       type,
       createdBy: "user",
       createdAt: new Date().toISOString(),
     };
 
+    let payload = base;
     if (type === "mcq") {
-      const cleaned = options.map((o) => o.trim()).filter(Boolean);
-      q.options = cleaned;
-      q.correctIndex = Math.min(correctIndex, cleaned.length - 1);
+      const cleaned = options.map((o) => o.trim());
+      const filled = cleaned.filter(Boolean);
+      const hasMarked = !!cleaned[correctIndex];
+      const correctAmongFilled = hasMarked
+        ? cleaned.slice(0, correctIndex + 1).filter(Boolean).length - 1
+        : 0;
+      const correctAnswer = filled[Math.max(0, Math.min(correctAmongFilled, filled.length - 1))];
+      payload = { ...base, options: filled, correctAnswer };
     } else {
-      if (sampleAnswer.trim()) q.sampleAnswer = sampleAnswer.trim();
+      payload = { ...base, sampleAnswer: sampleAnswer.trim() };
     }
 
-    saveToLocalStorage(q);
+    if (isEditing) updateUserQuestion(editingId, payload);
+    else addUserQuestion(payload);
+
     setSaved(true);
 
-    setText("");
-    setSampleAnswer("");
-    setOptions(["", "", "", ""]);
-    setCorrectIndex(0);
+    navigate("/questions/manage");
   }
 
   return (
     <div className="createq-page">
-    
       <div className={`createq-bg ${bgReady ? "is-visible" : ""}`} aria-hidden="true" />
-
-      <audio ref={audioRef} src="/sounds/forest.mp3" preload="auto" playsInline />
+      <audio ref={audioRef} src="/sounds/nightsky2.mp3" preload="auto" playsInline />
 
       <div className="content-box create-card create-question">
-        <h2 className="page-title">Skapa ny fråga</h2>
+        <h2 className="page-title">{isEditing ? "Redigera fråga" : "Skapa ny fråga"}</h2>
         <p className="page-subtitle">
           Skapa i lugn och ro – dina frågor sparas här lokalt hos dig.
         </p>
@@ -145,11 +155,7 @@ export default function CreateQuestion() {
               className="quiz-text-input"
               placeholder="Skriv din fråga här…"
               value={text}
-              onChange={(e) => {
-                setText(e.target.value);
-                if (error) setError("");
-                if (saved) setSaved(false);
-              }}
+              onChange={(e) => { setText(e.target.value); if (error) setError(""); }}
             />
           </div>
 
@@ -163,8 +169,7 @@ export default function CreateQuestion() {
                   value="mcq"
                   checked={type === "mcq"}
                   onChange={() => setType("mcq")}
-                />{" "}
-                Flervalsfråga
+                /> Flervalsfråga
               </label>
               <label className="radio">
                 <input
@@ -173,8 +178,7 @@ export default function CreateQuestion() {
                   value="text"
                   checked={type === "text"}
                   onChange={() => setType("text")}
-                />{" "}
-                Fritext
+                /> Fritext
               </label>
             </div>
           </div>
@@ -182,7 +186,6 @@ export default function CreateQuestion() {
           {type === "mcq" && (
             <div className="field">
               <div className="field-label">Svarsalternativ</div>
-
               {options.map((opt, i) => (
                 <div className="option-row" key={i}>
                   <input
@@ -230,10 +233,13 @@ export default function CreateQuestion() {
                 + Lägg till alternativ
               </button>
             )}
-            <button type="submit" className="quiz-button">Spara fråga</button>
+            <button type="submit" className="quiz-button">
+              {isEditing ? "Uppdatera fråga" : "Spara fråga"}
+            </button>
             <button type="button" className="quiz-button" onClick={clearAllCustomQuestions}>
               Rensa egna frågor
             </button>
+            <Link to="/questions/manage" className="quiz-button">Hantera frågor</Link>
             <Link to="/" className="quiz-button">Avbryt</Link>
           </div>
         </form>

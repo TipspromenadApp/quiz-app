@@ -12,17 +12,22 @@ export default function FinalResultScreen() {
   const [totalCorrect, setTotalCorrect] = useState(0);
   const [total, setTotal] = useState(0);
 
- 
+  const [gameMode, setGameMode] = useState("solo");
+  const [botScore, setBotScore] = useState(null);
+  const [botName, setBotName] = useState("Jonas");
+
   const [bgLoaded, setBgLoaded] = useState(false);
   const audioRef = useRef(null);
-  const BG_URL = "/images/forest1.jpg?v=1"; 
+  const BG_URL = "/images/forest1.jpg?v=1";
 
+  // Preload bg
   useEffect(() => {
     const img = new Image();
     img.src = BG_URL;
     img.onload = () => setBgLoaded(true);
   }, [BG_URL]);
 
+  // Gentle audio
   useEffect(() => {
     const a = audioRef.current;
     if (!a) return;
@@ -32,6 +37,7 @@ export default function FinalResultScreen() {
     if (p && typeof p.catch === "function") p.catch(() => {});
   }, []);
 
+  // Load results + detect mode
   useEffect(() => {
     if (state?.answers?.length) {
       setAnswers(state.answers);
@@ -39,19 +45,57 @@ export default function FinalResultScreen() {
       const totalQ = state.totalQuestions ?? state.answers.length;
       setTotalCorrect(correct);
       setTotal(totalQ);
+
       localStorage.setItem("finalAnswers", JSON.stringify(state.answers));
       localStorage.setItem("finalScore", String(correct));
-      return;
+      localStorage.setItem("finalTotal", String(totalQ));
+    } else {
+      const stored = JSON.parse(localStorage.getItem("finalAnswers") || "[]");
+      setAnswers(stored);
+      const storedTotal = Number(localStorage.getItem("finalTotal") || stored.length || 0);
+      const storedScore = Number(localStorage.getItem("finalScore") || stored.filter(a => a.isCorrect).length || 0);
+      setTotal(storedTotal);
+      setTotalCorrect(storedScore);
     }
-    const stored = JSON.parse(localStorage.getItem("finalAnswers") || "[]");
-    setAnswers(stored);
-    setTotal(stored.length);
-    setTotalCorrect(stored.filter(a => a.isCorrect).length);
-  }, [state?.ts, state?.answers, state?.score, state?.totalQuestions]);
 
- 
+    const modeFromState = (state?.gameMode || "").toLowerCase();
+    const mode = modeFromState === "bot" ? "bot" : "solo";
+    setGameMode(mode);
+    localStorage.setItem("gameMode", mode);
+
+    const bn = state?.botName || localStorage.getItem("botName") || "Jonas";
+    setBotName(bn);
+    localStorage.setItem("botName", bn);
+
+    if (mode === "bot") {
+      const fromState = typeof state?.botScore === "number" ? state.botScore : null;
+      const fromLsTotal = localStorage.getItem("botTotalScore");
+      const fromLsLegacy = localStorage.getItem("botScore");
+      const parsed =
+        fromState ??
+        (fromLsTotal != null ? Number(fromLsTotal) :
+         (fromLsLegacy != null ? Number(fromLsLegacy) : null));
+      const numeric = Number.isFinite(parsed) ? parsed : null;
+      setBotScore(numeric);
+
+      if (Number.isFinite(fromState)) {
+        localStorage.setItem("botTotalScore", String(fromState));
+        localStorage.setItem("botScore", String(fromState));
+      }
+    } else {
+      setBotScore(null);
+    }
+  }, [
+    state?.ts,
+    state?.answers,
+    state?.score,
+    state?.totalQuestions,
+    state?.gameMode,
+    state?.botScore,
+    state?.botName
+  ]);
+
   function pickDisplayName() {
-    
     const stateUser =
       state?.userName ||
       state?.displayName ||
@@ -59,7 +103,6 @@ export default function FinalResultScreen() {
       state?.user?.userName ||
       state?.user?.email;
 
-   
     let savedObj = null;
     try {
       const raw = localStorage.getItem("user");
@@ -107,7 +150,6 @@ export default function FinalResultScreen() {
           <p className="no-results-message">Vänligen slutför ett quiz först.</p>
           <Link to="/" className="back-link">← Tillbaka till startsidan</Link>
         </div>
-      
         <audio ref={audioRef} src="/sounds/forest.mp3" loop preload="auto" />
       </div>
     );
@@ -125,6 +167,8 @@ export default function FinalResultScreen() {
         CorrectAnswer: a.correctAnswer != null ? String(a.correctAnswer) : "",
         IsCorrect: !!a.isCorrect,
         Type: a.type ?? "mcq",
+        BotAnswer: a.botAnswer != null ? String(a.botAnswer) : "",
+        BotIsCorrect: a.botIsCorrect === true
       }));
 
       const resultData = {
@@ -133,6 +177,9 @@ export default function FinalResultScreen() {
         Score: totalCorrect,
         TotalQuestions: total,
         Answers: normalizedAnswers,
+        GameMode: gameMode,
+        BotName: botName,
+        BotScore: Number.isFinite(botScore) ? botScore : undefined,
       };
 
       const response = await axios.post(
@@ -171,9 +218,17 @@ export default function FinalResultScreen() {
     }
   };
 
+  const showVersus = gameMode === "bot" && Number.isFinite(botScore);
+  const verdict = showVersus
+    ? (totalCorrect > botScore
+        ? "Du vinner!"
+        : totalCorrect < botScore
+          ? `${botName} vinner!`
+          : "Oavgjort!")
+    : null;
+
   return (
     <div className="final-page">
-     
       <div
         className={`final-bg-layer ${bgLoaded ? "show" : ""}`}
         style={{ backgroundImage: `url("${BG_URL}")` }}
@@ -182,7 +237,19 @@ export default function FinalResultScreen() {
 
       <div className="final-result-screen content-box">
         <h1 className="final-title">Slutresultat</h1>
-        <p className="score-summary">Du fick {totalCorrect} av {total} rätt.</p>
+
+        {!showVersus && (
+          <p className="score-summary">Du fick {totalCorrect} av {total} rätt.</p>
+        )}
+
+        {showVersus && (
+          <div className="versus-box">
+            <p className="score-summary">
+              Du: <strong>{totalCorrect}</strong> &nbsp; | &nbsp; {botName}: <strong>{botScore}</strong> &nbsp; (av {total})
+            </p>
+            <h3 className="versus-verdict">{verdict}</h3>
+          </div>
+        )}
 
         <table className="result-table">
           <thead>
@@ -194,14 +261,33 @@ export default function FinalResultScreen() {
             </tr>
           </thead>
           <tbody>
-            {answers.map((a, i) => (
-              <tr key={`${a.questionId ?? i}-${i}`}>
-                <td>{a.question}</td>
-                <td>{a.selectedAnswer ?? a.userAnswer ?? ""}</td>
-                <td>{a.correctAnswer ?? ""}</td>
-                <td>{a.isCorrect ? "Rätt" : "Fel"}</td>
-              </tr>
-            ))}
+            {answers.map((a, i) => {
+              const your = a.selectedAnswer ?? a.userAnswer ?? "";
+              const correct = a.correctAnswer ?? "";
+              const botAns = a?.botAnswer ?? "";
+              const botOk  = a?.botIsCorrect === true;
+
+              return (
+                <tr key={`${a.questionId ?? i}-${i}`}>
+                  <td>{a.question}</td>
+                  <td>
+                    {your}
+                    {showVersus && (
+                      <div style={{ fontSize: 12, opacity: 0.85, marginTop: 2 }}>
+                        <em>{botName}</em>: {botAns || "—"}{" "}
+                        {botAns ? (
+                          <span style={{ color: botOk ? "green" : "red", fontWeight: 700 }}>
+                            {botOk ? "✔" : "✖"}
+                          </span>
+                        ) : null}
+                      </div>
+                    )}
+                  </td>
+                  <td>{correct}</td>
+                  <td>{a.isCorrect ? "Rätt" : "Fel"}</td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
 
@@ -209,7 +295,7 @@ export default function FinalResultScreen() {
         <Link to="/results" className="quiz-button">Visa min historik</Link>
         <Link to="/" className="back-link">← Tillbaka till startsidan</Link>
       </div>
-    
+
       <audio ref={audioRef} src="/sounds/forest.mp3" loop preload="auto" />
     </div>
   );

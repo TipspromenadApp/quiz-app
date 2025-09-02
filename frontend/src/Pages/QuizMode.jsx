@@ -7,7 +7,6 @@ import { loadUserQuestions } from "../lib/userQuestions";
 export default function QuizMode() {
   const navigate = useNavigate();
 
-  
   const [bgReady, setBgReady] = useState(false);
   const audioRef = useRef(null);
 
@@ -58,10 +57,7 @@ export default function QuizMode() {
 
   return (
     <div className="mode-page">
-     
       <div className={`mode-bg ${bgReady ? "is-visible" : ""}`} aria-hidden="true" />
-
-     
       <audio ref={audioRef} src="/sounds/forest.mp3" loop preload="auto" playsInline />
 
       <div className="frosty-container bank mode-card">

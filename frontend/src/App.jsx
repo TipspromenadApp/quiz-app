@@ -16,7 +16,8 @@ import CreateQuestion from "./Pages/CreateQuestion.jsx";
 import Results from "./Pages/Results.jsx";
 import PlaceholderPage from "./Pages/PlaceholderPage";
 import MultiplayerPage from "./Pages/MultiplayerPage";
-import BotQuiz from "./Pages/BotQuiz";         
+import BotQuiz from "./Pages/BotQuiz";  
+import ManageQuestions from "./Pages/ManageQuestions";       
 
 import { loadUserQuestions } from "./lib/userQuestions";
 
@@ -57,6 +58,7 @@ function App() {
         <Route path="/final-result" element={<FinalResultScreen />} />
         <Route path="/welcome-new" element={<RegisterWelcome />} />
         <Route path="/questions/new" element={<CreateQuestion />} />
+        <Route path="/questions/manage" element={<ManageQuestions />} />
         <Route path="/results" element={<Results />} />
         <Route path="/stay-logged-in" element={<StayLoggedIn />} />
       </Routes>

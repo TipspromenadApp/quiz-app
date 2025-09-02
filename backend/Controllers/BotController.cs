@@ -11,7 +11,6 @@ public class BotController : ControllerBase
     private readonly BotService _svc;
     public BotController(BotService svc) => _svc = svc;
 
-    
     [HttpPost("move")]
     public ActionResult<MoveResponse> Move([FromBody] MoveRequest req)
     {
@@ -19,20 +18,26 @@ public class BotController : ControllerBase
         if (req.Options == null || req.Options.Length == 0)
             return BadRequest("Missing options.");
 
-        var res = _svc.Decide(req);
+        // Ensure the service gets everything it needs to judge correctness
+        var res = _svc.Decide(new MoveRequest
+        {
+            QuestionId    = req.QuestionId,
+            Options       = req.Options,
+            Difficulty    = string.IsNullOrWhiteSpace(req.Difficulty) ? "normal" : req.Difficulty,
+            CorrectAnswer = req.CorrectAnswer
+        });
+
         return Ok(res);
     }
-   
+
     [HttpPost("think")]
     public async Task<IActionResult> Think([FromBody] BotRequest req, CancellationToken ct)
     {
         if (req == null) return BadRequest("No body.");
         if (req.Options == null || req.Options.Count == 0)
             return BadRequest("Missing options.");
+        if (!ModelState.IsValid) return ValidationProblem(ModelState);
 
-             if (!ModelState.IsValid)
-        return ValidationProblem(ModelState);
-       
         var latency = (req.Difficulty ?? "normal").ToLowerInvariant() switch
         {
             "easy" => 5000,
@@ -40,64 +45,57 @@ public class BotController : ControllerBase
             _      => 3000
         };
         await Task.Delay(latency, ct);
-       
+
+        // IMPORTANT: pass difficulty + correct answer so the service can compute IsCorrect
         var svcReq = new MoveRequest
         {
-            QuestionId = req.QuestionId,
-            Options    = req.Options.ToArray()
-           
+            QuestionId    = req.QuestionId,
+            Options       = req.Options.ToArray(),  // the SHUFFLED options visible to the user
+            Difficulty    = req.Difficulty,
+            CorrectAnswer = req.CorrectAnswer
         };
 
         var svcRes = _svc.Decide(svcReq);
-      
+
         var (answerIndex, isCorrect) = MapToUnified(svcRes, req);
         return Ok(new { answerIndex, isCorrect });
     }
 
-    //helpers
+    // Helpers
 
     private static (int answerIndex, bool isCorrect) MapToUnified(object svcRes, BotRequest req)
     {
         int answerIndex = -1;
-        bool isCorrectKnown = false;
-        bool isCorrect = false;
+        bool? svcSaysCorrect = null;
 
         if (svcRes != null)
         {
             var t = svcRes.GetType();
 
-            
             answerIndex = ReadIntProp(t, svcRes, "AnswerIndex")
                        ?? ReadIntProp(t, svcRes, "Index")
                        ?? ReadIntProp(t, svcRes, "SelectedIndex")
                        ?? -1;
 
-          
-            var correct = ReadBoolProp(t, svcRes, "IsCorrect")
-                       ?? ReadBoolProp(t, svcRes, "Correct")
-                       ?? ReadBoolProp(t, svcRes, "Success");
-
-            if (correct.HasValue)
-            {
-                isCorrectKnown = true;
-                isCorrect = correct.Value;
-            }
+            svcSaysCorrect = ReadBoolProp(t, svcRes, "IsCorrect")
+                          ?? ReadBoolProp(t, svcRes, "Correct")
+                          ?? ReadBoolProp(t, svcRes, "Success");
         }
-       
-        if (!isCorrectKnown
-            && answerIndex >= 0
+
+        // Prefer the service’s correctness if it provided one
+        if (svcSaysCorrect.HasValue) return (answerIndex, svcSaysCorrect.Value);
+
+        // Otherwise compute locally based on what the client sent us
+        bool computed = false;
+        if (answerIndex >= 0
             && answerIndex < (req.Options?.Count ?? 0)
             && !string.IsNullOrWhiteSpace(req.CorrectAnswer))
         {
             var picked = req.Options[answerIndex];
-            isCorrect = string.Equals(picked, req.CorrectAnswer, System.StringComparison.Ordinal);
-            isCorrectKnown = true;
+            computed = string.Equals(picked, req.CorrectAnswer, System.StringComparison.Ordinal);
         }
 
-        if (!isCorrectKnown)
-            isCorrect = false;
-
-        return (answerIndex, isCorrect);
+        return (answerIndex, computed);
     }
 
     private static int? ReadIntProp(System.Type t, object obj, string name)
@@ -108,6 +106,7 @@ public class BotController : ControllerBase
         => t.GetProperty(name, BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase)
             ?.GetValue(obj) is bool v ? v : (bool?)null;
 }
+
 public sealed class BotRequest
 {
     public string? QuestionId { get; set; }
