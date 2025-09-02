@@ -16,13 +16,11 @@ namespace quiz_app.Services
                 {
                     page.Margin(50);
                     page.Size(PageSizes.A4);
-
-                    // Sidhuvud
+                    
                     page.Header().Text($"Quizresultat – {result.UserName}")
                         .FontSize(20)
                         .Bold();
-
-                    // Innehåll
+                   
                     page.Content().Column(col =>
                     {
                         col.Item().Text($"Datum: {result.DateTaken:yyyy-MM-dd HH:mm}");
@@ -65,15 +63,11 @@ namespace quiz_app.Services
                             col.Item().PaddingBottom(10);
                         }
                     });
-
-                    // Sidfot
                     page.Footer()
                         .AlignCenter()
                         .Text("Utarbetat av Quiz Explorers – där kunskap väcks till liv.");
                 });
             });
-
-            // Metadata
             var metadata = new DocumentMetadata
             {
                 Title    = $"Quizresultat – {result.UserName}",
@@ -82,7 +76,6 @@ namespace quiz_app.Services
                 Subject  = "Quizresultat",
                 Keywords = "quiz, resultat, lärande"
             };
-
             return document.WithMetadata(metadata).GeneratePdf();
         }
     }

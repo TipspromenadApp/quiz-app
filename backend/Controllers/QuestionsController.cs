@@ -21,9 +21,7 @@ namespace quiz_app.Controllers
     public class QuestionsController : ControllerBase
     {
         private readonly AppDbContext _context;
-        public QuestionsController(AppDbContext context) { _context = context; }
-
-        // ---------------------- PDF EXPORTS (yours, kept) ----------------------
+        public QuestionsController(AppDbContext context) { _context = context; }    
 
         [HttpPost("export-pdf")]
         public IActionResult ExportPdf([FromBody] SaveQuizResultRequest dto)
@@ -81,9 +79,6 @@ namespace quiz_app.Controllers
             stream.Position = 0;
             return File(stream, "application/pdf", "QuizSummary.pdf");
         }
-
-        // ---------------------- ORIGINAL CRUD (yours, kept) ----------------------
-
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Question>>> GetQuestions()
             => await _context.Questions.ToListAsync();
@@ -114,10 +109,6 @@ namespace quiz_app.Controllers
             await _context.SaveChangesAsync();
             return NoContent();
         }
-
-        // ---------------------- NEW: BOT-FRIENDLY NORMALIZED ENDPOINT ----------------------
-        // GET /api/Questions/by-round?round=1
-        // Returns: [{ id, text, type("mcq"|"text"), options?, correctAnswer, round }]
         [HttpGet("by-round")]
         public async Task<ActionResult<IEnumerable<QuestionDto>>> GetByRound([FromQuery] int? round)
         {
@@ -129,11 +120,8 @@ namespace quiz_app.Controllers
             {
                 var withRound = normalized.Where(d => d.Round == round.Value).ToList();
                 if (withRound.Count > 0) return Ok(withRound);
-
-                // Fallback: if your DB rows have no round set yet, still return some
                 return Ok(normalized.Take(10).ToList());
             }
-
             return Ok(normalized);
         }
 
@@ -142,38 +130,26 @@ namespace quiz_app.Controllers
             !string.IsNullOrWhiteSpace(d.Text) &&
             (string.Equals(d.Type, "text", StringComparison.OrdinalIgnoreCase)
                 ? !string.IsNullOrWhiteSpace(d.CorrectAnswer)
-                : (d.Options is { Count: >= 2 } && !string.IsNullOrWhiteSpace(d.CorrectAnswer)));
-
-        // ---------------------- Mapper (reflection-tolerant) ----------------------
+                : (d.Options is { Count: >= 2 } && !string.IsNullOrWhiteSpace(d.CorrectAnswer)));       
 
         private static QuestionDto ToDto(Question q)
-        {
-            // id
+        {         
             var idStr = (GetString(q, "Id") ?? GetInt(q, "Id")?.ToString() ?? "").Trim();
-
-            // text
-            var text = (GetString(q, "QuestionText") ?? GetString(q, "Text") ?? "").Trim();
-
-            // options: list -> json -> csv -> Option1..4 / OptionA..D
+          
+            var text = (GetString(q, "QuestionText") ?? GetString(q, "Text") ?? "").Trim();           
             var options = GetStringList(q, "Options")
                           ?? TryParseJsonList(GetString(q, "OptionsJson"))
                           ?? SplitCsv(GetString(q, "OptionsCsv") ?? GetString(q, "OptionsString"))
                           ?? GetOptionColumns(q);
-            if (options != null && options.Count == 0) options = null;
-
-            // type (normalize common labels)
+            if (options != null && options.Count == 0) options = null;          
             var typeRaw = (GetString(q, "Type") ?? GetString(q, "QuestionType"))?.Trim().ToLowerInvariant();
             var type = typeRaw switch
             {
                 "multiple" or "multiple-choice" or "alternativ" or "flervalsfråga" or "flervalsfraga" or "mcq" => "mcq",
                 "text" or "free" or "free-text" or "freetext" or "fritext" => "text",
                 _ => options != null && options.Count >= 2 ? "mcq" : "text"
-            };
-
-            // correct answer
-            var correct = (GetString(q, "CorrectAnswer") ?? GetString(q, "Answer"))?.Trim();
-
-            // round
+            };          
+            var correct = (GetString(q, "CorrectAnswer") ?? GetString(q, "Answer"))?.Trim();           
             int? round = GetInt(q, "Round") ?? GetInt(q, "RoundNumber");
 
             return new QuestionDto
@@ -185,9 +161,7 @@ namespace quiz_app.Controllers
                 CorrectAnswer = correct,
                 Round = round
             };
-        }
-
-        // ---------------------- Helpers ----------------------
+        }     
 
         private static string? GetString(object obj, string prop)
         {
@@ -234,12 +208,9 @@ namespace quiz_app.Controllers
             var parts = csv.Split(new[] { '|', ';', ',', '\n' }, StringSplitOptions.RemoveEmptyEntries)
                            .Select(s => s.Trim()).Where(s => s.Length > 0).ToList();
             return parts.Count > 0 ? parts : null;
-        }
-
-        // Reads Option1..Option4 OR OptionA..OptionD (your schema)
+        }      
         private static List<string>? GetOptionColumns(object obj)
-        {
-            // Option1..Option4
+        {           
             var numeric = new[] { "Option1", "Option2", "Option3", "Option4" };
             var list = new List<string>();
             foreach (var n in numeric)
@@ -247,9 +218,7 @@ namespace quiz_app.Controllers
                 var s = GetString(obj, n);
                 if (!string.IsNullOrWhiteSpace(s)) list.Add(s.Trim());
             }
-            if (list.Count >= 2) return list;
-
-            // OptionA..OptionD
+            if (list.Count >= 2) return list;            
             var alpha = new[] { "OptionA", "OptionB", "OptionC", "OptionD" };
             list.Clear();
             foreach (var n in alpha)

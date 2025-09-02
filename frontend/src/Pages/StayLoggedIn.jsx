@@ -94,7 +94,7 @@ export default function StayLoggedIn() {
         <div className="sl-card">
           <h1 className="sl-title">Klart! Du förblir inloggad</h1>
           <p className="sl-subtitle">
-            på den här enheten, <span className="sl-name">{name}</span>. Välkommen att fortsätta när du vill.
+            <span className="sl-name">{name}</span>. Välkommen att fortsätta när du vill.
           </p>
 
           <div className="sl-actions">

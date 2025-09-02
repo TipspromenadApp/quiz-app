@@ -19,15 +19,13 @@ export default function FinalResultScreen() {
   const [bgLoaded, setBgLoaded] = useState(false);
   const audioRef = useRef(null);
   const BG_URL = "/images/forest1.jpg?v=1";
-
-  // Preload bg
+  
   useEffect(() => {
     const img = new Image();
     img.src = BG_URL;
     img.onload = () => setBgLoaded(true);
   }, [BG_URL]);
-
-  // Gentle audio
+ 
   useEffect(() => {
     const a = audioRef.current;
     if (!a) return;
@@ -36,8 +34,6 @@ export default function FinalResultScreen() {
     const p = a.play();
     if (p && typeof p.catch === "function") p.catch(() => {});
   }, []);
-
-  // Load results + detect mode
   useEffect(() => {
     if (state?.answers?.length) {
       setAnswers(state.answers);

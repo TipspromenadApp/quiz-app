@@ -13,16 +13,14 @@ namespace quiz_app
         public DbSet<QuizAnswer> QuizAnswers { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
-        {
-            // Relations
+        {         
             modelBuilder.Entity<QuizAnswer>()
                 .HasOne(a => a.QuizResult)
                 .WithMany(r => r.Answers)
                 .HasForeignKey(a => a.QuizResultId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // IMPORTANT: Your current DB/migration shows Question has: Id, Text, Type, Options (CSV), CorrectAnswer
-            // So we seed using that exact shape (Options = "A,B,C,D")
+          
             modelBuilder.Entity<Question>().HasData(
                 new
                 {

@@ -38,23 +38,21 @@ function FitTo({ current, target }) {
   }, [current, target, map]);
   return null;
 }
-
 const fmt = (n, d = 1) => (n == null ? "?" : Number(n).toFixed(d));
 
 export default function MapView({
   current,
   target,
-  distance,     // meters to target (point mode)
-  moved,        // meters moved (distance mode)
-  totalMoved,   // running total across questions
+  distance,     
+  moved,        
+  totalMoved,   
   accuracy,
-  mode,         // "distance" | "point" | "idle"
-  targetMeters, // for distance mode
+  mode,         
+  targetMeters, 
 }) {
   const fallback = useMemo(() => ({ lat: 56.8333, lon: 13.9333 }), []);
   const center = current ?? target ?? fallback;
-
-  // draw a recent trail
+  
   const [trail, setTrail] = useState([]);
   useEffect(() => {
     if (current?.lat && current?.lon) {
@@ -125,9 +123,7 @@ export default function MapView({
               <Badge label="Noggrannhet" value={`±${accuracy ? Math.round(accuracy) : "?"} m`} />
             </>
           )}
-        </div>
-
-        {/* Shorter map & enable native zoom controls/wheel */}
+        </div>      
         <div style={{ height: 320, width: "100%" }}>
           <MapContainer
             center={[center.lat, center.lon]}

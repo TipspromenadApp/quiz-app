@@ -7,7 +7,26 @@
   background-size: cover;
 }
 
+.login-page::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: url("/images/forest6.jpg") no-repeat center center fixed;
+  background-size: cover;
+  opacity: 0;
+  animation: fadeInBackground 5s ease-in forwards; 
+  z-index: 0; 
+}
+
+@keyframes fadeInBackground {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
 .login-card {
+  position: relative;
+  z-index: 1;
+
   background: rgba(0, 0, 0, 0.6);
   padding: 40px 30px;
   border-radius: 20px;
@@ -64,23 +83,4 @@
 .back-link:hover {
   text-decoration: underline;
 }
-.firefly {
-  position: fixed;
-  width: 8px;
-  height: 8px;
-  background: radial-gradient(circle, rgba(255, 240, 250, 0.9) 0%, transparent 70%);
-  border-radius: 50%;
-  pointer-events: none;
-  animation: flicker 3s infinite ease-in-out, floatFirefly 10s infinite linear;
-  z-index: 1;
-}
 
-@keyframes flicker {
-  0%, 100% { opacity: 0; }
-  50% { opacity: 0.7; }
-}
-
-@keyframes floatFirefly {
-  0% { transform: translate(0, 0); }
-  100% { transform: translate(-10px, -20px); }
-}

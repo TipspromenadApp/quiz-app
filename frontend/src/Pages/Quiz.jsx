@@ -7,7 +7,6 @@ import { loadUserQuestions } from "../lib/userQuestions";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:5249";
 
-/* ---------------- utils ---------------- */
 function normalizeText(s) {
   return String(s ?? "")
     .trim()
@@ -15,8 +14,6 @@ function normalizeText(s) {
     .normalize("NFD")
     .replace(/\p{Diacritic}/gu, "");
 }
-
-/* ---------------- server save ---------------- */
 const saveRoundResult = async (roundNumber, roundScore, questionCount, answers) => {
   try {
     const saved = JSON.parse(localStorage.getItem("user") || "null") || {};
@@ -153,8 +150,6 @@ function pushLocalHistory({ answersAll, rounds }) {
     console.warn("Failed to push local history:", e);
   }
 }
-
-/* ---------------- Allmänna pools (unchanged) ---------------- */
 const roundOneQuestions = [
   { id: 1, text: "Vilken av dessa drycker innehåller oftast koffein?", options: ["Apelsinjuice", "Vatten", "Te", "Mjölk"], correctAnswer: "Te", type: "mcq" },
   { id: 2, text: "Vad är sushi traditionellt inlindad i?", options: ["Sjögräs", "Sallad", "Rispapper", "Plast"], correctAnswer: "Sjögräs", type: "mcq" },
@@ -225,11 +220,9 @@ const WALK_THRESHOLDS = { "5": 5, "10": 10 };
 const Quiz = () => {
   const navigate = useNavigate();
 
-  /* which bank to use */
   const initialSource = (localStorage.getItem("pref_quizSource") || "general").trim();
   const [quizSource] = useState(initialSource);
-
-  /* pools per round for this run */
+ 
   const poolRef = useRef([]);
 
   const [quizStarted, setQuizStarted] = useState(false);
@@ -239,7 +232,7 @@ const Quiz = () => {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [shuffledQuestions, setShuffledQuestions] = useState([]);
   const [selectedAnswer, setSelectedAnswer] = useState(null);
-  const [textAnswer, setTextAnswer] = useState("");             // NEW for Fritext
+  const [textAnswer, setTextAnswer] = useState("");             
   const [showResult, setShowResult] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
   const [score, setScore] = useState(0);
@@ -324,8 +317,7 @@ const Quiz = () => {
     for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
     return out;
   };
-
-  // Normalize personal questions
+  
   const normalizePersonal = (q, idx) => {
     const id = q.id ?? q.questionId ?? idx + 1;
     const text = q.text ?? q.question ?? "";
@@ -362,7 +354,7 @@ const Quiz = () => {
         norm.options.includes(correctAnswer) && correctAnswer
           ? String(correctAnswer)
           : norm.options[0] ?? "";
-      // If options ended up < 2, degrade to text
+    
       if (norm.options.length < 2) {
         norm.type = "text";
         norm.sampleAnswer = norm.correctAnswer || sampleAnswer || "";
@@ -377,7 +369,7 @@ const Quiz = () => {
 
   function proceedToNextQuestion() {
     setCurrentQuestionIndex((p) => p + 1);
-    setTextAnswer(""); // clear text field for next question
+    setTextAnswer(""); 
   }
 
   function primeRoundQuestions(bank) {
@@ -399,12 +391,11 @@ const Quiz = () => {
     }
     setWaitingForWalk(true);
     const target = WALK_THRESHOLDS[uiThreshold] ?? 5;
-    gateBaselineRef.current = totalMoved || 0; // kept (not relied upon for display/advance)
+    gateBaselineRef.current = totalMoved || 0;
     startDistance(target);
     forceGetCurrent();
   }
-
-  // ---------- FIX: use boundary math based on roundOffset + currentQuestionIndex ----------
+ 
   useEffect(() => {
     if (!waitingForWalk) return;
     const gateTarget = WALK_THRESHOLDS[uiThreshold] ?? 5;
@@ -669,8 +660,7 @@ const Quiz = () => {
 
   const roundMovedDisplay = Math.max(0, (totalMoved ?? 0) - (roundOffset ?? 0));
   const gateTarget = WALK_THRESHOLDS[uiThreshold] ?? 5;
-
-  // ---------- FIX: visible “Denna fråga” progress also uses boundary math ----------
+  
   const previousBoundary = (roundOffset ?? 0) + (currentQuestionIndex * gateTarget);
   const movedThisQuestion = Math.max(0, (totalMoved ?? 0) - previousBoundary);
 
@@ -901,8 +891,7 @@ const Quiz = () => {
               <strong>Fråga {currentQuestionIndex + 1}:</strong>{" "}
               {shuffledQuestions[currentQuestionIndex].text}
             </p>
-
-            {/* MCQ vs TEXT UI */}
+           
             {shuffledQuestions[currentQuestionIndex]?.type === "mcq" &&
               (shuffledQuestions[currentQuestionIndex]?.options || []).map((option, idx) => (
                 <button

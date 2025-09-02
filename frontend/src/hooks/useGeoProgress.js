@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 
-// meters between two lat/lon points
 function haversine(a, b) {
   if (!a || !b) return 0;
   const R = 6371000;
@@ -15,38 +14,27 @@ function haversine(a, b) {
   return 2 * R * Math.asin(Math.sqrt(s));
 }
 
-// move lat/lon by dx east, dy north (meters)
 function offsetLatLon({ lat, lon }, dxMeters, dyMeters) {
   const R = 6371000;
   const dLat = (dyMeters / R) * (180 / Math.PI);
   const dLon = (dxMeters / (R * Math.cos((lat * Math.PI) / 180))) * (180 / Math.PI);
   return { lat: lat + dLat, lon: lon + dLon };
 }
-
-/**
- * useGeoProgress
- *  - mode: "idle" | "distance" | "point"
- *  - moved: meters progressed for the *current gate* (resets when a new question locks)
- *  - totalMoved: running total meters since the quiz started (doesn't reset)
- *  - startDistance(thresholdMeters)
- *  - startToPoint({lat, lon, radius})
- *  - simulate(deltaMeters)  -> also shifts the marker so you see motion on map
- */
 export function useGeoProgress() {
-  const [position, setPosition] = useState(null);     // {lat, lon}
+  const [position, setPosition] = useState(null);     
   const [accuracy, setAccuracy] = useState(null);
   const [error, setError] = useState(null);
 
   const [mode, setMode] = useState("idle");
   const [targetMeters, setTargetMeters] = useState(null);
 
-  const [moved, setMoved] = useState(0);              // per-question
-  const [totalMoved, setTotalMoved] = useState(0);    // running total
+  const [moved, setMoved] = useState(0);             
+  const [totalMoved, setTotalMoved] = useState(0);   
 
-  const startRef = useRef(null);                      // start point for this gate
-  const prevPosRef = useRef(null);                    // last known pos for delta accumulation
+  const startRef = useRef(null);                      
+  const prevPosRef = useRef(null);                   
 
-  const pointTargetRef = useRef(null);                // {lat, lon, radius}
+  const pointTargetRef = useRef(null);               
   const [distanceToTarget, setDistanceToTarget] = useState(null);
 
   const [ready, setReady] = useState(false);
@@ -67,8 +55,7 @@ export function useGeoProgress() {
         const lat = pos.coords.latitude;
         const lon = pos.coords.longitude;
         const cur = { lat, lon };
-
-        // accumulate total distance by step deltas
+        
         if (prevPosRef.current) {
           const step = haversine(prevPosRef.current, cur);
           if (Number.isFinite(step)) setTotalMoved((t) => t + step);
@@ -83,7 +70,7 @@ export function useGeoProgress() {
           if (!startRef.current) startRef.current = cur;
           const dist = haversine(startRef.current, cur);
           setMoved((prev) => {
-            const v = Math.max(prev, dist); // avoid jitter decreasing value
+            const v = Math.max(prev, dist); 
             if (targetMeters != null) setReady(v >= targetMeters);
             return v;
           });
@@ -132,8 +119,6 @@ export function useGeoProgress() {
   function stopTracking() {
     clearWatch();
   }
-
-  // soft reset between questions; keep position & totalMoved
   function reset() {
     clearWatch();
     setMode("idle");
@@ -142,17 +127,14 @@ export function useGeoProgress() {
     setAccuracy(null);
     setDistanceToTarget(null);
     startRef.current = null;
-    pointTargetRef.current = null;
-    // note: we DO NOT reset totalMoved or position here
-  }
-
-  // one-shot fix to center the map quickly
+    pointTargetRef.current = null;    
+  } 
   function forceGetCurrent() {
     if (!navigator.geolocation?.getCurrentPosition) return;
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const cur = { lat: pos.coords.latitude, lon: pos.coords.longitude };
-        // accumulate total from previous to this fix
+        
         if (prevPosRef.current) {
           const step = haversine(prevPosRef.current, cur);
           if (Number.isFinite(step)) setTotalMoved((t) => t + step);
@@ -167,15 +149,11 @@ export function useGeoProgress() {
       { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 }
     );
   }
-
-  // simulate meters and visibly move marker east
   function simulate(deltaMeters) {
     const delta = Number(deltaMeters) || 0;
-    const base = position ?? { lat: 56.8333, lon: 13.9333 }; // Ljungby fallback
+    const base = position ?? { lat: 56.8333, lon: 13.9333 };
     const next = offsetLatLon(base, delta, 0);
     setPosition(next);
-
-    // accumulate totals
     setTotalMoved((t) => t + delta);
 
     if (mode === "distance") {

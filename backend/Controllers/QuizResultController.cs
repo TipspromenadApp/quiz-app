@@ -64,10 +64,6 @@ namespace quiz_app.Controllers
 
             return Ok(new { roundsCompleted, totalRounds = 5 });
         }
-
-
-
-
         [HttpGet]
         public async Task<ActionResult<IEnumerable<QuizResult>>> GetResults()
         {
@@ -78,7 +74,6 @@ namespace quiz_app.Controllers
 
             return Ok(results);
         }
-
 
 [HttpGet("{userName}")]
 public async Task<IActionResult> GetForUser(string userName)
@@ -91,8 +86,6 @@ public async Task<IActionResult> GetForUser(string userName)
 
     return Ok(items);
 }
-
-
 [HttpGet("{userName}/paged")]
 public async Task<IActionResult> GetForUserPaged(
     string userName,
@@ -115,8 +108,6 @@ public async Task<IActionResult> GetForUserPaged(
 
     return Ok(new { total, page, pageSize, items });
 }
-
-
 [HttpDelete("{id:int}")]
 public async Task<IActionResult> DeleteOne(int id)
 {
@@ -125,7 +116,6 @@ public async Task<IActionResult> DeleteOne(int id)
         .FirstOrDefaultAsync(x => x.Id == id);
 
     if (entity == null) return NotFound();
-
     
     _context.RemoveRange(entity.Answers);
     _context.QuizResults.Remove(entity);
@@ -133,8 +123,6 @@ public async Task<IActionResult> DeleteOne(int id)
     await _context.SaveChangesAsync();
     return NoContent();
 }
-
-
 [HttpDelete("user/{userName}")]
 public async Task<IActionResult> DeleteAllForUser(string userName)
 {

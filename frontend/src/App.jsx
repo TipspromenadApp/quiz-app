@@ -21,6 +21,10 @@ import ManageQuestions from "./Pages/ManageQuestions";
 
 import { loadUserQuestions } from "./lib/userQuestions";
 
+
+import Fireflies from "./components/Fireflies";
+import "./styles/Fireflies.css";
+
 function App() {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -30,6 +34,9 @@ function App() {
 
   return (
     <Router>
+     
+      <Fireflies count={3} zIndex={1} />
+
       <Routes>
         <Route path="/" element={<Home setIsModalOpen={setIsModalOpen} />} />
 
@@ -67,14 +74,3 @@ function App() {
 }
 
 export default App;
-
-
-
-
-
-
-
-
-
-
-

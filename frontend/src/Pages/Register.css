@@ -84,3 +84,25 @@
   0% { transform: translate(0, 0); }
   100% { transform: translate(-10px, -20px); }
 }
+
+.background-image {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: url("/images/forest10.jpg") no-repeat center center/cover;
+  opacity: 0;
+  animation: fadeInBackground 15s forwards; 
+  z-index: -1;
+}
+
+@keyframes fadeInBackground {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.register-page {
+  position: relative;
+  z-index: 1;
+}

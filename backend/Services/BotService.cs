@@ -1,7 +1,7 @@
 using System;
 using System.Linq;
-using System.Text;                     // ⬅️ needed for NormalizationForm
-using System.Globalization;            // ⬅️ for CharUnicodeInfo
+using System.Text;                   
+using System.Globalization;           
 using System.Text.Json.Serialization;
 
 public class BotService
@@ -11,9 +11,7 @@ public class BotService
         ["easy"]   = (0.05, 1800),
         ["normal"] = (0.70, 1100),
         ["hard"]   = (0.90, 700),
-    };
-
-    // Normalize (lower, trim, strip diacritics) so "Solljus" == "solljus"
+    };    
     private static string Norm(string? s)
     {
         if (string.IsNullOrWhiteSpace(s)) return "";
@@ -30,9 +28,7 @@ public class BotService
         var options = r.Options ?? Array.Empty<string>();
 
         int seed = HashCode.Combine(r.QuestionId ?? "", string.Join("|", options), DateTime.UtcNow.Ticks);
-        var rng = new Random(seed);
-
-        // Robust correct index lookup (case/diacritic insensitive)
+        var rng = new Random(seed);        
         int correctIdx = -1;
         if (!string.IsNullOrWhiteSpace(r.CorrectAnswer) && options.Length > 0)
         {
@@ -64,7 +60,7 @@ public class BotService
         return new MoveResponse
         {
             AnswerIndex = answerIdx,
-            AnswerText  = chosenText,                          // ⬅️ helps the client score locally
+            AnswerText  = chosenText,                        
             DecideInMs  = decideInMs,
             IsCorrect   = (correctIdx >= 0 && answerIdx == correctIdx),
             Seed        = seed
@@ -76,8 +72,8 @@ public class MoveRequest
 {
     [JsonPropertyName("questionId")]   public string?  QuestionId    { get; set; }
     [JsonPropertyName("options")]      public string[]? Options      { get; set; }
-    [JsonPropertyName("difficulty")]   public string?  Difficulty    { get; set; } // "easy"|"normal"|"hard"
-    [JsonPropertyName("correctAnswer")]public string?  CorrectAnswer { get; set; } // optional
+    [JsonPropertyName("difficulty")]   public string?  Difficulty    { get; set; } 
+    [JsonPropertyName("correctAnswer")]public string?  CorrectAnswer { get; set; } 
 }
 
 public class MoveResponse

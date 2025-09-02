@@ -20,7 +20,7 @@ function Register() {
       const payload = {
         username: username.trim() || undefined,
         email: email.trim().toLowerCase(),
-        password: password
+        password: password,
       };
 
       const res = await fetch(REGISTER_URL, {
@@ -41,10 +41,8 @@ function Register() {
       }
 
       const display = username.trim() || email.trim().toLowerCase();
-     
       localStorage.setItem("loggedInUser", display);
       localStorage.setItem("justRegisteredUser", display);
-
       navigate("/welcome-new", { state: { userName: display } });
     } catch (err) {
       console.error("Registreringsfel:", err);
@@ -53,7 +51,11 @@ function Register() {
   };
 
   return (
-    <div className="register-page">
+    <div className="register-page">    
+      <div className="background-image"></div>
+
+      <audio src="/sounds/sea.mp3" autoPlay loop />
+
       <div className="register-card">
         <h2>Registrera</h2>
         {error && <p className="error-message">{error}</p>}
@@ -91,7 +93,6 @@ function Register() {
 
         <Link to="/" className="back-link">← Tillbaka till startsidan</Link>
       </div>
-
       {[...Array(10)].map((_, i) => {
         const top = Math.random() * 100;
         const left = Math.random() * 100;

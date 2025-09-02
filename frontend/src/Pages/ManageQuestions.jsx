@@ -63,7 +63,7 @@ export default function ManageQuestions() {
                       <> • Alternativ: {q.options.join(" · ")} • Rätt: <strong>{q.correctAnswer}</strong></>
                     ) : null}
                     {q.type === "text" && q.sampleAnswer ? (
-                      <> • Exempelsvar: <em>{q.sampleAnswer}</em></>
+                      <> • svar: <em>{q.sampleAnswer}</em></>
                     ) : null}
                   </td>
                   <td className="q-actions">

@@ -222,7 +222,7 @@ export default function CreateQuestion() {
                 className="quiz-text-input"
                 value={sampleAnswer}
                 onChange={(e) => setSampleAnswer(e.target.value)}
-                placeholder="Exempelsvar (valfritt)"
+                placeholder="svar (valfritt)"
               />
             </div>
           )}

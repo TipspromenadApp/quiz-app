@@ -97,7 +97,6 @@ async function fetchGeneralQuestions(roundNumber) {
 
 const WALK_THRESHOLDS = { "0.5": 5, "1": 10 };
 
-// local history helper so Results page can show “Mot bot”
 function pushLocalHistory({ answersAll, rounds, botScore, botName }) {
   try {
     const score = answersAll.filter((a) => a.isCorrect).length;
@@ -159,8 +158,7 @@ export default function BotQuiz() {
   const [userAnswers, setUserAnswers] = useState([]);
   const [allAnswers, setAllAnswers] = useState([]);
   const [textInput, setTextInput] = useState("");
-
-  // keep every bot answer (for FinalResult + PDF)
+  
   const [botAllAnswers, setBotAllAnswers] = useState([]);
 
   const [bgReady, setBgReady] = useState(false);
@@ -375,8 +373,7 @@ export default function BotQuiz() {
       const finalIsCorrect = isTextQuestion(q)
         ? (pickedText ? isTextCorrect(pickedText, q) : false)
         : (pickedText != null && correctText != null && pickedText === correctText);
-
-      // tiny bonus to make bot feel smarter sometimes
+      
       const SMARTNESS_BONUS = { easy: 0.45, normal: 0.45, hard: 0.45 };
       let adjustedIsCorrect = finalIsCorrect;
       if (!finalIsCorrect) {
@@ -471,14 +468,13 @@ export default function BotQuiz() {
       return nextBotScoreVal;
     });
 
-    // merge bot's answer into the saved user record
+  
     const finalRecord = {
       ...pendingRecord,
       botAnswer: typeof botAnswer === "string" ? botAnswer : (botAnswer ?? ""),
       botIsCorrect: !!botCorrect,
     };
-
-    // also keep a parallel bot record list (optional)
+   
     const botRecord = {
       round: currentRound,
       questionId: q.id,
@@ -520,13 +516,13 @@ export default function BotQuiz() {
 
       const playerTotal = updatedAll.filter((a) => a.isCorrect).length;
       const finalPayload = {
-        answers: updatedAll,                // per-row now includes botAnswer & botIsCorrect
+        answers: updatedAll,                
         totalQuestions: updatedAll.length,
         score: playerTotal,
         gameMode: "bot",
         botName: botName || "Bot Jonas",
         botScore: nextBotScoreVal,
-        botAnswers: updatedBotAll,         // optional parallel list
+        botAnswers: updatedBotAll,         
         ts: Date.now(),
       };
 
@@ -543,7 +539,7 @@ export default function BotQuiz() {
         localStorage.setItem("finalBotScore", String(finalPayload.botScore));
       } catch {}
 
-      // store in local history as a bot match (so “Mot bot” shows in Results)
+     
       pushLocalHistory({
         answersAll: updatedAll,
         rounds: Number(rounds),
@@ -565,7 +561,7 @@ export default function BotQuiz() {
         resetPerQuestion();
       }
     }, 800);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+  
   }, [pendingRecord, playerAnsweredAt, botAnsweredAt]);
 
   async function loadNextRoundQuestions(nextRound) {
@@ -610,8 +606,7 @@ export default function BotQuiz() {
         UserAnswer: a.userAnswer != null ? String(a.userAnswer) : "",
         CorrectAnswer: a.correctAnswer != null ? String(a.correctAnswer) : "",
         IsCorrect: !!a.isCorrect,
-        Type: a.type ?? "mcq",
-        // NOTE: not sending bot fields to this endpoint to avoid server breakage
+        Type: a.type ?? "mcq",       
       }));
       const req = {
         UserName, RoundNumber: roundNumber, TotalQuestions: questionCount, Score: roundScore,
@@ -792,11 +787,10 @@ export default function BotQuiz() {
             <button className="back-link skip-btn" type="button" onClick={handleSkip}>
               Hoppa över →
             </button>
-
-            {/* RESULT BLOCK: your result + bot's answer */}
+            
             {showResult && (
               <div className="result">
-                {/* Your result (only if "Visa rätt svar" is on) */}
+               
                 {showCorrect && (
                   <p style={{ color: isCorrect ? "green" : "red" }}>
                     {isCorrect
@@ -804,8 +798,6 @@ export default function BotQuiz() {
                       : `Fel. Rätt svar är: ${getCorrectAnswerText(shuffledQuestions[currentQuestionIndex])}`}
                   </p>
                 )}
-
-                {/* Bot result */}
                 <div style={{ marginTop: 6, opacity: 0.95 }}>
                   {typeof botAnsweredAt === "number" ? (
                     <p>

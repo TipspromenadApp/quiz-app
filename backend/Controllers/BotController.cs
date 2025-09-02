@@ -16,9 +16,7 @@ public class BotController : ControllerBase
     {
         if (req == null) return BadRequest("No body.");
         if (req.Options == null || req.Options.Length == 0)
-            return BadRequest("Missing options.");
-
-        // Ensure the service gets everything it needs to judge correctness
+            return BadRequest("Missing options.");       
         var res = _svc.Decide(new MoveRequest
         {
             QuestionId    = req.QuestionId,
@@ -44,13 +42,11 @@ public class BotController : ControllerBase
             "hard" => 2000,
             _      => 3000
         };
-        await Task.Delay(latency, ct);
-
-        // IMPORTANT: pass difficulty + correct answer so the service can compute IsCorrect
+        await Task.Delay(latency, ct);      
         var svcReq = new MoveRequest
         {
             QuestionId    = req.QuestionId,
-            Options       = req.Options.ToArray(),  // the SHUFFLED options visible to the user
+            Options       = req.Options.ToArray(),  
             Difficulty    = req.Difficulty,
             CorrectAnswer = req.CorrectAnswer
         };
@@ -59,9 +55,7 @@ public class BotController : ControllerBase
 
         var (answerIndex, isCorrect) = MapToUnified(svcRes, req);
         return Ok(new { answerIndex, isCorrect });
-    }
-
-    // Helpers
+    } 
 
     private static (int answerIndex, bool isCorrect) MapToUnified(object svcRes, BotRequest req)
     {
@@ -80,12 +74,8 @@ public class BotController : ControllerBase
             svcSaysCorrect = ReadBoolProp(t, svcRes, "IsCorrect")
                           ?? ReadBoolProp(t, svcRes, "Correct")
                           ?? ReadBoolProp(t, svcRes, "Success");
-        }
-
-        // Prefer the service’s correctness if it provided one
-        if (svcSaysCorrect.HasValue) return (answerIndex, svcSaysCorrect.Value);
-
-        // Otherwise compute locally based on what the client sent us
+        }        
+        if (svcSaysCorrect.HasValue) return (answerIndex, svcSaysCorrect.Value);        
         bool computed = false;
         if (answerIndex >= 0
             && answerIndex < (req.Options?.Count ?? 0)

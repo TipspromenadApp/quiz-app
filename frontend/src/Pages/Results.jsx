@@ -129,7 +129,6 @@ function loadLocalHistory() {
   }
 }
 
-// Convert the BotQuiz final payload (if present) into a normalized result
 function loadLastFinalPayload() {
   try {
     const fp = JSON.parse(localStorage.getItem("finalPayload") || "null");
@@ -196,7 +195,6 @@ export default function Results() {
     (async () => {
       setLoading(true);
 
-      // 1) server results if available
       let serverResults = [];
       if (userName) {
         try {
@@ -206,13 +204,9 @@ export default function Results() {
         }
       }
 
-      // 2) local history (solo sessions are stored here)
       const localHistory = loadLocalHistory();
 
-      // 3) last final payload (esp. bot sessions) – guarantees the latest match shows up
       const finalPayloadAsResult = loadLastFinalPayload();
-
-      // merge & dedupe
       const merged = [...serverResults, ...localHistory];
       if (finalPayloadAsResult) merged.unshift(finalPayloadAsResult);
 
@@ -556,6 +550,15 @@ export default function Results() {
                           const your = a?.type === "text" ? a?.userAnswer ?? "" : a?.selectedAnswer ?? "";
                           const correct = a?.type === "text" ? "—" : a?.correctAnswer ?? "";
                           const isOk = a?.type === "text" ? null : a?.isCorrect === true;
+
+                          // NEW: pick bot answer if present (supports multiple possible keys)
+                          const botAns =
+                            a?.botAnswer ??
+                            a?.botSelectedAnswer ??
+                            a?.bot ??
+                            a?.opponentAnswer ??
+                            null;
+
                           const cellStyle = {
                             padding: "8px 6px",
                             borderBottom: "1px solid rgba(255,255,255,0.08)",
@@ -567,7 +570,15 @@ export default function Results() {
                             <tr key={a.id ?? idx}>
                               <td style={cellStyle}>{idx + 1}</td>
                               <td style={cellStyle}>{a?.question ?? ""}</td>
-                              <td style={cellStyle}>{your}</td>
+                              <td style={cellStyle}>
+                                <div>{your}</div>
+                                {/* NEW: subtle bot answer line, only in bot mode and when present */}
+                                {r.gameMode === "bot" && botAns != null && (
+                                  <div style={{ fontSize: 12, opacity: 0.85, marginTop: 2, fontStyle: "italic" }}>
+                                    {(r.botName || "Bot Jonas")}: {String(botAns)}
+                                  </div>
+                                )}
+                              </td>
                               <td style={cellStyle}>{correct}</td>
                               <td style={cellStyle}>
                                 {isOk === null ? "—" : (

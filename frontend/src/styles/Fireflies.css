@@ -1,0 +1,49 @@
+.fireflies-layer {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+}
+
+.firefly {
+  position: fixed;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  pointer-events: none;
+
+  background: radial-gradient(closest-side, rgba(255,255,210,1),
+                              rgba(255,255,180,0.25) 60%, transparent 70%);
+  box-shadow:
+    0 0 12px rgba(255,255,210,0.95),
+    0 0 28px rgba(255,255,170,0.75),
+    0 0 48px rgba(255,255,150,0.55);
+
+  animation-name: wander, twinkle;
+  animation-iteration-count: infinite, infinite;
+  animation-timing-function: linear, ease-in-out;
+  animation-duration: var(--wanderDur, 18s), 2.2s;
+  will-change: transform, opacity, box-shadow;
+  z-index: 1;
+}
+
+@keyframes wander {
+  0%   { transform: translate(0vw, 0vh); }
+  20%  { transform: translate(12vw, -6vh); }
+  40%  { transform: translate(-8vw, 10vh); }
+  60%  { transform: translate(16vw, 4vh); }
+  80%  { transform: translate(-10vw, -12vh); }
+  100% { transform: translate(0vw, 0vh); }
+}
+
+@keyframes twinkle {
+  0% { opacity: 0.85; filter: brightness(1); }
+  50% { opacity: 1; filter: brightness(1.2); }
+  100% { opacity: 0.9; filter: brightness(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .firefly {
+    animation: twinkle 3s ease-in-out infinite;
+    animation-duration: var(--wanderDur, 20s), 2s;
+  }
+}

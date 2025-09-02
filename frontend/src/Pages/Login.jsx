@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "./Login.css";
 
@@ -8,8 +8,23 @@ function Login() {
   const [error, setError]       = useState("");
   const navigate = useNavigate();
 
+  const audioRef = useRef(null);
+
   const API_BASE  = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:5249";
   const LOGIN_URL = `${API_BASE}/api/auth/login`;
+
+  useEffect(() => {
+   
+    const el = audioRef.current;
+    if (el) {
+      el.volume = 0.2;
+     
+      const tryPlay = el.play?.();
+      if (tryPlay && typeof tryPlay.catch === "function") {
+        tryPlay.catch(() => {});
+      }
+    }
+  }, []);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -59,6 +74,11 @@ function Login() {
 
   return (
     <div className="login-page">
+      
+      <div className="background-image"></div>
+      
+      <audio ref={audioRef} src="/sounds/forest.mp3" autoPlay loop />
+
       <div className="login-card">
         <h2>Logga in</h2>
         {error && <p className="error-message">{error}</p>}
@@ -86,19 +106,25 @@ function Login() {
         </form>
 
         <Link to="/" className="back-link">← Tillbaka till start</Link>
-      </div>
-
-      {[...Array(10)].map((_, i) => (
-        <div
-          key={i}
-          className="firefly"
-          style={{
-            top: `${Math.random() * 100}vh`,
-            left: `${Math.random() * 100}vw`,
-            animationDelay: `${Math.random() * 5}s`,
-          }}
-        />
-      ))}
+      </div>      
+      {[...Array(10)].map((_, i) => {
+        const top = Math.random() * 100;
+        const left = Math.random() * 100;
+        const delay = Math.random() * 5;
+        const duration = 14 + Math.random() * 12; 
+        return (
+          <div
+            key={i}
+            className="firefly"
+            style={{
+              top: `${top}vh`,
+              left: `${left}vw`,
+              animationDelay: `${delay}s`,
+              animationDuration: `${duration}s`,
+            }}
+          />
+        );
+      })}
     </div>
   );
 }
