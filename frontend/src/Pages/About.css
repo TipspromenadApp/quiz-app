@@ -1,0 +1,89 @@
+
+.hero {
+  position: relative;
+  min-height: 100vh;
+  overflow: hidden;
+  background: #000; 
+}
+
+.hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: url("/images/forest6.jpg");
+  background-size: cover;
+  background-position: center;
+  opacity: 1; 
+  will-change: opacity;
+}
+
+.hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: url("/images/forest9.jpg");
+  background-size: cover;
+  background-position: center;
+  opacity: 0;
+  transition: opacity 10s ease-in; 
+  will-change: opacity;
+}
+
+.hero.bg-ready::after {
+  opacity: 1;
+}
+
+.content {
+  position: relative;
+  z-index: 1;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 4rem 1rem;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+}
+
+.title {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+}
+
+.tagline {
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+ol { margin-left: 1.25rem; }
+
+.back-link {
+  display: inline-block;
+  margin-top: 1.5rem;
+  color: #fff;
+  text-decoration: none;
+  border: 1px solid rgba(255,255,255,0.5);
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+}
+
+.particle {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.9);
+  box-shadow: 0 0 10px rgba(255,255,255,0.9);
+  animation: float 12s linear infinite;
+}
+
+@keyframes float {
+  from { transform: translateY(0); }
+  to   { transform: translateY(-200vh); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero::after {
+    transition: none;
+    opacity: 1; 
+  }
+  .particle { animation: none; }
+}

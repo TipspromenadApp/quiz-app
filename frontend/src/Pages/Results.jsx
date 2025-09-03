@@ -285,7 +285,7 @@ export default function Results() {
         });
         if (!res.ok && res.status !== 204) throw new Error(`HTTP ${res.status}`);
       } catch {
-        // ignore
+      
       }
     }
     localStorage.removeItem("quizHistory");
@@ -549,9 +549,7 @@ export default function Results() {
                         {(r.answers ?? []).map((a, idx) => {
                           const your = a?.type === "text" ? a?.userAnswer ?? "" : a?.selectedAnswer ?? "";
                           const correct = a?.type === "text" ? "—" : a?.correctAnswer ?? "";
-                          const isOk = a?.type === "text" ? null : a?.isCorrect === true;
-
-                          // NEW: pick bot answer if present (supports multiple possible keys)
+                          const isOk = a?.type === "text" ? null : a?.isCorrect === true;                          
                           const botAns =
                             a?.botAnswer ??
                             a?.botSelectedAnswer ??
@@ -571,8 +569,7 @@ export default function Results() {
                               <td style={cellStyle}>{idx + 1}</td>
                               <td style={cellStyle}>{a?.question ?? ""}</td>
                               <td style={cellStyle}>
-                                <div>{your}</div>
-                                {/* NEW: subtle bot answer line, only in bot mode and when present */}
+                                <div>{your}</div>                                
                                 {r.gameMode === "bot" && botAns != null && (
                                   <div style={{ fontSize: 12, opacity: 0.85, marginTop: 2, fontStyle: "italic" }}>
                                     {(r.botName || "Bot Jonas")}: {String(botAns)}

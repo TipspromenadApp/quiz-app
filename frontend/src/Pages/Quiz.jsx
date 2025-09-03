@@ -395,18 +395,18 @@ const Quiz = () => {
     startDistance(target);
     forceGetCurrent();
   }
- 
-  useEffect(() => {
-    if (!waitingForWalk) return;
-    const gateTarget = WALK_THRESHOLDS[uiThreshold] ?? 5;
-    const previousBoundary = (roundOffset ?? 0) + (currentQuestionIndex * gateTarget);
-    const progressed = Math.max(0, (totalMoved ?? 0) - previousBoundary);
-    if (progressed >= gateTarget) {
-      stopTracking();
-      setWaitingForWalk(false);
-      proceedToNextQuestion();
-    }
-  }, [waitingForWalk, totalMoved, uiThreshold, currentQuestionIndex, roundOffset, stopTracking]);
+ useEffect(() => {
+  if (!waitingForWalk) return;
+  const gateTarget = WALK_THRESHOLDS[uiThreshold] ?? 5;
+  const baseline = gateBaselineRef.current ?? 0;          
+  const progressed = Math.max(0, (totalMoved ?? 0) - baseline);
+  if (progressed >= gateTarget) {
+    stopTracking();
+    setWaitingForWalk(false);
+    proceedToNextQuestion();
+  }
+}, [waitingForWalk, totalMoved, uiThreshold, stopTracking]);
+
 
   useEffect(() => () => { stopTracking(); }, [stopTracking]);
 
@@ -661,8 +661,9 @@ const Quiz = () => {
   const roundMovedDisplay = Math.max(0, (totalMoved ?? 0) - (roundOffset ?? 0));
   const gateTarget = WALK_THRESHOLDS[uiThreshold] ?? 5;
   
-  const previousBoundary = (roundOffset ?? 0) + (currentQuestionIndex * gateTarget);
-  const movedThisQuestion = Math.max(0, (totalMoved ?? 0) - previousBoundary);
+ const baseline = gateBaselineRef.current ?? 0;             
+const movedThisQuestion = Math.max(0, (totalMoved ?? 0) - baseline);
+
 
   return (
     <div className="start-page">

@@ -77,7 +77,7 @@ export default function ManageQuestions() {
         )}
         <div className="footer-actions">
           <Link to="/questions/new" className="btn primary">+ Ny fråga</Link>
-          <Link to="/" className="btn">Tillbaka</Link>
+          <Link to="/questions/new" className="btn">Tillbaka</Link>
         </div>
       </div>
     </div>

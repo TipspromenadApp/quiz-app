@@ -9,6 +9,8 @@ export default function QuizMode() {
 
   const [bgReady, setBgReady] = useState(false);
   const audioRef = useRef(null);
+  const setupDone = useRef(false);
+  const unlocked = useRef(false);
 
   useEffect(() => {
     const id = requestAnimationFrame(() => setBgReady(true));
@@ -16,30 +18,41 @@ export default function QuizMode() {
   }, []);
 
   useEffect(() => {
+    if (setupDone.current) return;
+    setupDone.current = true;
+
     const el = audioRef.current;
     if (!el) return;
+
+    const tryPlay = () => el.play().catch(() => {});
+    const onCanPlay = () => tryPlay();
+
     el.volume = 0.16;
     el.muted = true;
-    const tryPlay = () => el.play().catch(() => {});
     tryPlay();
+    el.addEventListener("canplaythrough", onCanPlay);
 
     const unlock = () => {
+      if (unlocked.current) return;
+      unlocked.current = true;
       el.muted = false;
+      el.currentTime = 0;
       tryPlay();
-      document.removeEventListener("pointerdown", unlock);
-      document.removeEventListener("keydown", unlock);
-      document.removeEventListener("visibilitychange", onVis);
     };
-    const onVis = () => { if (!document.hidden) unlock(); };
 
-    document.addEventListener("pointerdown", unlock, { once: true });
-    document.addEventListener("keydown", unlock, { once: true });
-    document.addEventListener("visibilitychange", onVis);
+    const onVisibility = () => {
+      if (!document.hidden) unlock();
+    };
+
+    document.addEventListener("pointerdown", unlock);
+    document.addEventListener("keydown", unlock);
+    document.addEventListener("visibilitychange", onVisibility);
 
     return () => {
+      el.removeEventListener("canplaythrough", onCanPlay);
       document.removeEventListener("pointerdown", unlock);
       document.removeEventListener("keydown", unlock);
-      document.removeEventListener("visibilitychange", onVis);
+      document.removeEventListener("visibilitychange", onVisibility);
     };
   }, []);
 
@@ -58,7 +71,14 @@ export default function QuizMode() {
   return (
     <div className="mode-page">
       <div className={`mode-bg ${bgReady ? "is-visible" : ""}`} aria-hidden="true" />
-      <audio ref={audioRef} src="/sounds/forest.mp3" loop preload="auto" playsInline />
+      <audio
+        ref={audioRef}
+        src="/sounds/nightsky2.mp3"
+        autoPlay
+        loop
+        preload="auto"
+        playsInline
+      />
 
       <div className="frosty-container bank mode-card">
         <h1 className="title">Välj frågebank</h1>

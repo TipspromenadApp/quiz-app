@@ -136,6 +136,11 @@ function pushLocalHistory({ answersAll, rounds, botScore, botName }) {
   }
 }
 
+const ALLOWED_ROUNDS = [1, 2, 3, 4, 5];
+const ALLOWED_QPR = [3, 6, 9, 10];
+const clampToSet = (value, allowed, fallback) =>
+  allowed.includes(value) ? value : fallback;
+
 export default function BotQuiz() {
   const navigate = useNavigate();
   const reactLocation = useLocation();
@@ -144,8 +149,14 @@ export default function BotQuiz() {
   const botName = navState.botName || localStorage.getItem("pref_bot_name") || "Bot Jonas";
 
   const [quizStarted, setQuizStarted] = useState(false);
-  const [rounds, setRounds] = useState(() => Number(localStorage.getItem("pref_rounds") || 5));
-  const [questionsPerRound, setQuestionsPerRound] = useState(() => Number(localStorage.getItem("pref_perRound") || 10));
+
+  const [rounds, setRounds] = useState(() =>
+    clampToSet(Number(localStorage.getItem("pref_rounds") || 5), ALLOWED_ROUNDS, 5)
+  );
+  const [questionsPerRound, setQuestionsPerRound] = useState(() =>
+    clampToSet(Number(localStorage.getItem("pref_perRound") || 10), ALLOWED_QPR, 10)
+  );
+
   const [currentRound, setCurrentRound] = useState(1);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [shuffledQuestions, setShuffledQuestions] = useState([]);
@@ -158,7 +169,7 @@ export default function BotQuiz() {
   const [userAnswers, setUserAnswers] = useState([]);
   const [allAnswers, setAllAnswers] = useState([]);
   const [textInput, setTextInput] = useState("");
-  
+
   const [botAllAnswers, setBotAllAnswers] = useState([]);
 
   const [bgReady, setBgReady] = useState(false);
@@ -219,10 +230,20 @@ export default function BotQuiz() {
   const [waitingForWalk, setWaitingForWalk] = useState(false);
   const IS_DEV = import.meta.env?.DEV ?? false;
 
+  // Persist, with clamping in case old values were stored
+  useEffect(() => {
+    const safe = clampToSet(rounds, ALLOWED_ROUNDS, 5);
+    localStorage.setItem("pref_rounds", String(safe));
+    if (safe !== rounds) setRounds(safe);
+  }, [rounds]);
+  useEffect(() => {
+    const safe = clampToSet(questionsPerRound, ALLOWED_QPR, 10);
+    localStorage.setItem("pref_perRound", String(safe));
+    if (safe !== questionsPerRound) setQuestionsPerRound(safe);
+  }, [questionsPerRound]);
+
   useEffect(() => { localStorage.setItem("pref_walkMode", JSON.stringify(walkMode)); }, [walkMode]);
   useEffect(() => { localStorage.setItem("pref_walkThreshold", uiThreshold); }, [uiThreshold]);
-  useEffect(() => { localStorage.setItem("pref_rounds", String(rounds)); }, [rounds]);
-  useEffect(() => { localStorage.setItem("pref_perRound", String(questionsPerRound)); }, [questionsPerRound]);
 
   const { moved, ready, accuracy, error, startDistance, stopTracking, reset, simulate } = useGeoProgress();
 
@@ -308,12 +329,18 @@ export default function BotQuiz() {
   };
 
   const handleStart = async () => {
+    // Clamp chosen values one more time right before playing
+    const safeRounds = clampToSet(rounds, ALLOWED_ROUNDS, 5);
+    const safeQpr = clampToSet(questionsPerRound, ALLOWED_QPR, 10);
+    if (safeRounds !== rounds) setRounds(safeRounds);
+    if (safeQpr !== questionsPerRound) setQuestionsPerRound(safeQpr);
+
     const initialRaw = await buildPool(1);
     if (quizSource === "personal" && initialRaw.length === 0) {
       alert('Du har inga egna frågor ännu. Lägg till dem under “Skapa ny fråga”.');
       navigate("/questions/new"); return;
     }
-    const initial = shuffleArray(initialRaw).slice(0, questionsPerRound);
+    const initial = shuffleArray(initialRaw).slice(0, safeQpr);
     setShuffledQuestions(initial);
     setQuizStarted(true);
     setCurrentRound(1);
@@ -468,7 +495,6 @@ export default function BotQuiz() {
       return nextBotScoreVal;
     });
 
-  
     const finalRecord = {
       ...pendingRecord,
       botAnswer: typeof botAnswer === "string" ? botAnswer : (botAnswer ?? ""),
@@ -516,13 +542,13 @@ export default function BotQuiz() {
 
       const playerTotal = updatedAll.filter((a) => a.isCorrect).length;
       const finalPayload = {
-        answers: updatedAll,                
+        answers: updatedAll,
         totalQuestions: updatedAll.length,
         score: playerTotal,
         gameMode: "bot",
         botName: botName || "Bot Jonas",
         botScore: nextBotScoreVal,
-        botAnswers: updatedBotAll,         
+        botAnswers: updatedBotAll,
         ts: Date.now(),
       };
 
@@ -539,7 +565,6 @@ export default function BotQuiz() {
         localStorage.setItem("finalBotScore", String(finalPayload.botScore));
       } catch {}
 
-     
       pushLocalHistory({
         answersAll: updatedAll,
         rounds: Number(rounds),
@@ -665,36 +690,105 @@ export default function BotQuiz() {
               </fieldset>
             </div>
 
-            <div className="compact-row selects-line">
-              <label className="compact-field">
+            <div
+              className="compact-row selects-line"
+              style={{
+                display: "flex",
+                gap: 12,
+                alignItems: "center",
+                justifyContent: "center",
+                flexWrap: "nowrap",
+                overflowX: "auto",
+                padding: "10px 12px",
+                border: "1px solid rgba(255,255,255,0.18)",
+                borderRadius: 16,
+                background: "rgba(255,255,255,0.06)",
+                backdropFilter: "blur(2px)",
+              }}
+            >
+              <label className="compact-field" style={{ whiteSpace: "nowrap" }}>
                 Svårighet:
-                <select className="tiny-select pill-select" value={difficulty} onChange={(e)=>setDifficulty(e.target.value)}>
+                <select
+                  className="tiny-select pill-select"
+                  value={difficulty}
+                  onChange={(e)=>setDifficulty(e.target.value)}
+                  style={{
+                    marginLeft: 8,
+                    background: "transparent",
+                    borderRadius: 999,
+                    border: "1px solid rgba(255,255,255,0.35)",
+                    color: "#fff",
+                    padding: "8px 12px",
+                  }}
+                >
                   <option value="easy">Lätt</option>
                   <option value="normal">Normal</option>
                   <option value="hard">Svår</option>
                 </select>
               </label>
 
-              <label className="compact-field">
+              <label className="compact-field" style={{ whiteSpace: "nowrap" }}>
                 Bot-hastighet:
-                <select className="tiny-select pill-select" value={botSpeed} onChange={(e)=>setBotSpeed(e.target.value)}>
+                <select
+                  className="tiny-select pill-select"
+                  value={botSpeed}
+                  onChange={(e)=>setBotSpeed(e.target.value)}
+                  style={{
+                    marginLeft: 8,
+                    background: "transparent",
+                    borderRadius: 999,
+                    border: "1px solid rgba(255,255,255,0.35)",
+                    color: "#fff",
+                    padding: "8px 12px",
+                  }}
+                >
                   <option value="slow">Långsam</option>
                   <option value="normal">Normal</option>
                   <option value="fast">Snabb</option>
                 </select>
               </label>
 
-              <label className="compact-field">
+              <label className="compact-field" style={{ whiteSpace: "nowrap" }}>
                 Rundor:
-                <select className="tiny-select pill-select" value={rounds} onChange={(e)=>setRounds(Number(e.target.value))}>
-                  {[1,2,3,4,5,6,7,8,9,10].map(n => <option key={n} value={n}>{n}</option>)}
+                <select
+                  className="tiny-select pill-select"
+                  value={rounds}
+                  onChange={(e)=>{
+                    const n = Number(e.target.value);
+                    setRounds(clampToSet(n, ALLOWED_ROUNDS, 5));
+                  }}
+                  style={{
+                    marginLeft: 8,
+                    background: "transparent",
+                    borderRadius: 999,
+                    border: "1px solid rgba(255,255,255,0.35)",
+                    color: "#fff",
+                    padding: "8px 12px",
+                  }}
+                >
+                  {ALLOWED_ROUNDS.map(n => <option key={n} value={n}>{n}</option>)}
                 </select>
               </label>
 
-              <label className="compact-field">
+              <label className="compact-field" style={{ whiteSpace: "nowrap" }}>
                 Frågor/runda:
-                <select className="tiny-select pill-select" value={questionsPerRound} onChange={(e)=>setQuestionsPerRound(Number(e.target.value))}>
-                  {[3,5,6,7,8,9,10,12,15].map(n => <option key={n} value={n}>{n}</option>)}
+                <select
+                  className="tiny-select pill-select"
+                  value={questionsPerRound}
+                  onChange={(e)=>{
+                    const n = Number(e.target.value);
+                    setQuestionsPerRound(clampToSet(n, ALLOWED_QPR, 10));
+                  }}
+                  style={{
+                    marginLeft: 8,
+                    background: "transparent",
+                    borderRadius: 999,
+                    border: "1px solid rgba(255,255,255,0.35)",
+                    color: "#fff",
+                    padding: "8px 12px",
+                  }}
+                >
+                  {ALLOWED_QPR.map(n => <option key={n} value={n}>{n}</option>)}
                 </select>
               </label>
             </div>
@@ -790,7 +884,6 @@ export default function BotQuiz() {
             
             {showResult && (
               <div className="result">
-               
                 {showCorrect && (
                   <p style={{ color: isCorrect ? "green" : "red" }}>
                     {isCorrect

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "./Register.css";
 
@@ -9,8 +9,20 @@ function Register() {
   const [error, setError]       = useState("");
   const navigate = useNavigate();
 
+  const audioRef = useRef(null);
+
   const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:5249";
   const REGISTER_URL = `${API_BASE}/api/auth/register`;
+
+  useEffect(() => {
+   
+    const el = audioRef.current;
+    if (el) {
+      el.volume = 0.2;
+      const p = el.play?.();
+      if (p && typeof p.catch === "function") p.catch(() => {});
+    }
+  }, []);
 
   const handleRegister = async (e) => {
     e.preventDefault();
@@ -51,10 +63,10 @@ function Register() {
   };
 
   return (
-    <div className="register-page">    
+    <div className="register-page">
       <div className="background-image"></div>
-
-      <audio src="/sounds/sea.mp3" autoPlay loop />
+     
+      <audio ref={audioRef} src="/sounds/nightsky2.mp3" autoPlay loop />
 
       <div className="register-card">
         <h2>Registrera</h2>
@@ -92,23 +104,7 @@ function Register() {
         </form>
 
         <Link to="/" className="back-link">← Tillbaka till startsidan</Link>
-      </div>
-      {[...Array(10)].map((_, i) => {
-        const top = Math.random() * 100;
-        const left = Math.random() * 100;
-        const delay = Math.random() * 5;
-        return (
-          <div
-            key={i}
-            className="firefly"
-            style={{
-              top: `${top}vh`,
-              left: `${left}vw`,
-              animationDelay: `${delay}s`,
-            }}
-          />
-        );
-      })}
+      </div>  
     </div>
   );
 }

@@ -73,60 +73,41 @@ function Login() {
   };
 
   return (
-    <div className="login-page">
-      
-      <div className="background-image"></div>
-      
-      <audio ref={audioRef} src="/sounds/forest.mp3" autoPlay loop />
+  <div className="login-page">
+    <div className="background-image"></div>
+    <audio ref={audioRef} src="/sounds/forest.mp3" autoPlay loop />
 
-      <div className="login-card">
-        <h2>Logga in</h2>
-        {error && <p className="error-message">{error}</p>}
+    <div className="login-card">
+      <h2>Logga in</h2>
+      {error && <p className="error-message">{error}</p>}
 
-        <form onSubmit={handleLogin}>
-          <label>E-post</label>
-          <input
-            type="email"
-            placeholder="Ange e-post"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
+      <form onSubmit={handleLogin}>
+        <label>E-post</label>
+        <input
+          type="email"
+          placeholder="Ange e-post"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+        />
 
-          <label>Lösenord</label>
-          <input
-            type="password"
-            placeholder="Ange lösenord"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
+        <label>Lösenord</label>
+        <input
+          type="password"
+          placeholder="Ange lösenord"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+        />
 
-          <button type="submit">Logga in</button>
-        </form>
+        <button type="submit">Logga in</button>
+      </form>
 
-        <Link to="/" className="back-link">← Tillbaka till start</Link>
-      </div>      
-      {[...Array(10)].map((_, i) => {
-        const top = Math.random() * 100;
-        const left = Math.random() * 100;
-        const delay = Math.random() * 5;
-        const duration = 14 + Math.random() * 12; 
-        return (
-          <div
-            key={i}
-            className="firefly"
-            style={{
-              top: `${top}vh`,
-              left: `${left}vw`,
-              animationDelay: `${delay}s`,
-              animationDuration: `${duration}s`,
-            }}
-          />
-        );
-      })}
+      <Link to="/" className="back-link">← Tillbaka till start</Link>
     </div>
-  );
+  </div>
+);
+
 }
 
 export default Login;

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 
+/* --------- tiny math helpers --------- */
 function haversine(a, b) {
   if (!a || !b) return 0;
   const R = 6371000;
@@ -13,49 +14,80 @@ function haversine(a, b) {
     Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) ** 2;
   return 2 * R * Math.asin(Math.sqrt(s));
 }
-
 function offsetLatLon({ lat, lon }, dxMeters, dyMeters) {
   const R = 6371000;
   const dLat = (dyMeters / R) * (180 / Math.PI);
   const dLon = (dxMeters / (R * Math.cos((lat * Math.PI) / 180))) * (180 / Math.PI);
   return { lat: lat + dLat, lon: lon + dLon };
 }
+
+/* --------- localStorage helpers (scoped) --------- */
+const GEO_NS = "geo:v1";
+function loadJSON(key, fallback) {
+  try { const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : fallback; }
+  catch { return fallback; }
+}
+function saveJSON(key, val) {
+  try { localStorage.setItem(key, JSON.stringify(val)); } catch {}
+}
+
 export function useGeoProgress() {
-  const [position, setPosition] = useState(null);     
+  const [position, setPosition] = useState(null);
   const [accuracy, setAccuracy] = useState(null);
   const [error, setError] = useState(null);
 
   const [mode, setMode] = useState("idle");
   const [targetMeters, setTargetMeters] = useState(null);
 
-  const [moved, setMoved] = useState(0);             
-  const [totalMoved, setTotalMoved] = useState(0);   
+  const [moved, setMoved] = useState(0);          // per-question gate distance
+  const [totalMoved, setTotalMoved] = useState(0); // cumulative distance across session
 
-  const startRef = useRef(null);                      
-  const prevPosRef = useRef(null);                   
+  const startRef = useRef(null);     // per-question baseline (distance gate)
+  const prevPosRef = useRef(null);   // last GPS point for incremental steps
 
-  const pointTargetRef = useRef(null);               
+  const pointTargetRef = useRef(null);
   const [distanceToTarget, setDistanceToTarget] = useState(null);
 
   const [ready, setReady] = useState(false);
   const watchIdRef = useRef(null);
 
+  /* --------- restore persisted totals/last position ONCE --------- */
+  useEffect(() => {
+    const saved = loadJSON(`${GEO_NS}:state`, null);
+    if (saved && typeof saved.totalMoved === "number") {
+      setTotalMoved(saved.totalMoved);
+      if (saved.lastPosition && typeof saved.lastPosition.lat === "number" && typeof saved.lastPosition.lon === "number") {
+        // seed both UI state and the prev ref so the first GPS step is smooth
+        setPosition(saved.lastPosition);
+        prevPosRef.current = saved.lastPosition;
+      }
+    }
+  }, []);
+
+  /* --------- persist whenever totalMoved / position changes --------- */
+  useEffect(() => {
+    const payload = {
+      totalMoved,
+      lastPosition: position ? { lat: position.lat, lon: position.lon } : null,
+    };
+    saveJSON(`${GEO_NS}:state`, payload);
+  }, [totalMoved, position]);
+
+  /* --------- geolocation wiring --------- */
   function clearWatch() {
     if (watchIdRef.current != null && navigator.geolocation?.clearWatch) {
       try { navigator.geolocation.clearWatch(watchIdRef.current); } catch {}
       watchIdRef.current = null;
     }
   }
-
   function startWatch() {
     if (!navigator.geolocation?.watchPosition) return;
     clearWatch();
     watchIdRef.current = navigator.geolocation.watchPosition(
       (pos) => {
-        const lat = pos.coords.latitude;
-        const lon = pos.coords.longitude;
-        const cur = { lat, lon };
-        
+        const cur = { lat: pos.coords.latitude, lon: pos.coords.longitude };
+
+        // accumulate incremental step since previous fix
         if (prevPosRef.current) {
           const step = haversine(prevPosRef.current, cur);
           if (Number.isFinite(step)) setTotalMoved((t) => t + step);
@@ -67,10 +99,10 @@ export function useGeoProgress() {
         setError(null);
 
         if (mode === "distance") {
-          if (!startRef.current) startRef.current = cur;
+          if (!startRef.current) startRef.current = cur; // set baseline on first fix for this question
           const dist = haversine(startRef.current, cur);
           setMoved((prev) => {
-            const v = Math.max(prev, dist); 
+            const v = Math.max(prev, dist);
             if (targetMeters != null) setReady(v >= targetMeters);
             return v;
           });
@@ -83,9 +115,7 @@ export function useGeoProgress() {
           }
         }
       },
-      (err) => {
-        setError(err?.message || "Geolocation error");
-      },
+      (err) => setError(err?.message || "Geolocation error"),
       { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 }
     );
   }
@@ -93,14 +123,13 @@ export function useGeoProgress() {
   function startDistance(thresholdMeters) {
     setMode("distance");
     setTargetMeters(Number(thresholdMeters) || 5);
-    setMoved(0);
+    setMoved(0);                 // reset per-question gate (OK)
     setReady(false);
     setDistanceToTarget(null);
     startRef.current = null;
     pointTargetRef.current = null;
     startWatch();
   }
-
   function startToPoint(target, radius) {
     const t = {
       lat: Number(target?.lat),
@@ -115,11 +144,10 @@ export function useGeoProgress() {
     startRef.current = null;
     startWatch();
   }
+  function stopTracking() { clearWatch(); }
 
-  function stopTracking() {
-    clearWatch();
-  }
   function reset() {
+    // IMPORTANT: do NOT zero totalMoved here
     clearWatch();
     setMode("idle");
     setMoved(0);
@@ -127,20 +155,20 @@ export function useGeoProgress() {
     setAccuracy(null);
     setDistanceToTarget(null);
     startRef.current = null;
-    pointTargetRef.current = null;    
-  } 
+    pointTargetRef.current = null;
+    // keep prevPosRef/current position: we want smooth continuation
+  }
+
   function forceGetCurrent() {
     if (!navigator.geolocation?.getCurrentPosition) return;
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const cur = { lat: pos.coords.latitude, lon: pos.coords.longitude };
-        
         if (prevPosRef.current) {
           const step = haversine(prevPosRef.current, cur);
           if (Number.isFinite(step)) setTotalMoved((t) => t + step);
         }
         prevPosRef.current = cur;
-
         setPosition(cur);
         setAccuracy(pos.coords.accuracy ?? null);
         setError(null);
@@ -149,6 +177,7 @@ export function useGeoProgress() {
       { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 }
     );
   }
+
   function simulate(deltaMeters) {
     const delta = Number(deltaMeters) || 0;
     const base = position ?? { lat: 56.8333, lon: 13.9333 };
@@ -176,6 +205,7 @@ export function useGeoProgress() {
   useEffect(() => () => clearWatch(), []);
 
   return {
+    // readings
     moved,
     totalMoved,
     ready,
@@ -183,13 +213,22 @@ export function useGeoProgress() {
     error,
     distanceToTarget,
     position,
+
+    // controls
     startDistance,
     startToPoint,
     stopTracking,
     reset,
     simulate,
     forceGetCurrent,
+
+    // meta
     mode,
     targetMeters,
+
+    // setters exposed (if you ever need them)
+    setTotalMoved,
+    setPosition,
+    setMoved,
   };
 }
