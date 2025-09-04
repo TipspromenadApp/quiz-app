@@ -1,4 +1,3 @@
-
 .createq-bg{
   position: fixed;
   inset: 0;
@@ -136,4 +135,69 @@
   padding: 12px;
   border-radius: 12px;
   margin-bottom: 16px;
+}
+
+/* ────────────────────────────────────────────────
+   Mobile-friendly fixes (non-destructive)
+   ──────────────────────────────────────────────── */
+
+/* Make the page and card behave on phones without changing your style */
+.createq-page {
+  min-height: 100svh;
+  padding: max(12px, env(safe-area-inset-top)) 12px
+           max(16px, env(safe-area-inset-bottom)) 12px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+.content-box.create-card.create-question {
+  width: 100%;
+  max-width: 560px;              /* cap on larger screens */
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+/* Inputs: prevent iOS zoom + white caret like login page */
+.create-question .quiz-text-input,
+.create-question input[type="text"],
+.create-question textarea {
+  font-size: 16px;
+  caret-color: #fff;
+}
+
+/* Option rows: radio + text + remove button should wrap neatly */
+.option-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.option-row input[type="radio"] { flex: 0 0 auto; }
+.option-row .option-input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.remove-btn { white-space: nowrap; }
+
+/* Footer buttons: wrap into grid on narrow screens */
+.form-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 6px;
+}
+@media (max-width: 640px) {
+  .form-footer .quiz-button { flex: 1 1 calc(50% - 8px); }
+}
+@media (max-width: 380px) {
+  .form-footer .quiz-button { flex: 1 1 100%; }
+  .content-box.create-card.create-question { padding: 12px; border-radius: 16px; }
+}
+
+/* Keep labels/heading readable but compact on small phones */
+@media (max-width: 380px) {
+  .create-question .page-title { font-size: 1.4rem; }
+  .field-label { font-size: 1rem; }
 }

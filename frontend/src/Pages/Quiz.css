@@ -524,6 +524,9 @@ h2{
 .answer-btn.selected{ background: rgba(139,211,255,.20); border-color: var(--ring); }
 
 
+.answer-btn:focus { outline: none; }
+.answer-btn:focus-visible { outline: 2px solid rgba(255,255,255,.6); outline-offset: 2px; }
+
 .back-link{
   color: var(--text-dim);
   text-decoration: none;

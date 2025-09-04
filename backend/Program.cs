@@ -10,25 +10,26 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Services.AddSingleton<BotService>(); // Jonas' brain
+builder.Services.AddSingleton<BotService>();
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite("Data Source=quiz.db"));
 
+// CORS: allow local dev + your current frontend tunnel
 const string FrontDev = "FrontDev";
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy(FrontDev, policy =>
-        policy.WithOrigins(
-            "http://localhost:5173",
-            "http://127.0.0.1:5173",
-            "http://localhost:3000",
-            "http://127.0.0.1:3000"
-        )
-        .AllowAnyHeader()
-        .AllowAnyMethod()
-        
-    );
+  options.AddPolicy(FrontDev, policy =>
+    policy.WithOrigins(
+   "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://192.168.1.100:5173"
+    )
+    .AllowAnyHeader()
+    .AllowAnyMethod()
+    .AllowCredentials()
+);
+
 });
 
 var app = builder.Build();
@@ -39,11 +40,13 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();  
-app.UseCors(FrontDev);    
+
+
+
+app.UseCors(FrontDev);
 app.UseAuthorization();
 
 app.MapControllers();
 
-app.Run("http://localhost:5249");
 
+app.Run("http://0.0.0.0:5249");

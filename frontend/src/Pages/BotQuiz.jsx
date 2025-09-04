@@ -589,6 +589,14 @@ export default function BotQuiz() {
   
   }, [pendingRecord, playerAnsweredAt, botAnsweredAt]);
 
+  // 🔑 NEW: clear any leftover focus when question or round changes
+  useEffect(() => {
+    setSelectedAnswer(null);
+    setShowResult(false);
+    const t = setTimeout(() => document.activeElement?.blur?.(), 0);
+    return () => clearTimeout(t);
+  }, [currentQuestionIndex, currentRound]);
+
   async function loadNextRoundQuestions(nextRound) {
     const pool = await buildPool(nextRound);
     const next = shuffleArray(pool).slice(0, questionsPerRound);
@@ -866,16 +874,41 @@ export default function BotQuiz() {
                   disabled={showResult}
                   style={{ flex: 1, minWidth: 220 }}
                 />
-                <button type="button" onClick={() => textInput.trim() && handleAnswer(textInput)} disabled={showResult || !textInput.trim()} className="answer-btn">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.currentTarget.blur();
+                    if (textInput.trim()) handleAnswer(textInput);
+                  }}
+                  onMouseUp={(e) => e.currentTarget.blur()}
+                  onTouchEnd={(e) => e.currentTarget.blur()}
+                  disabled={showResult || !textInput.trim()}
+                  className="answer-btn"
+                >
                   Svara
                 </button>
               </div>
             ) : (
-              shuffledQuestions[currentQuestionIndex]?.options?.map((option, idx) => (
-                <button key={idx} type="button" onClick={() => handleAnswer(option)} disabled={showResult} className={`answer-btn ${selectedAnswer === option ? "selected" : ""}`}>
-                  {option}
-                </button>
-              ))
+              (shuffledQuestions[currentQuestionIndex]?.options || []).map((option, idx) => {
+                const q = shuffledQuestions[currentQuestionIndex];
+                const key = `${currentRound}-${q?.id ?? "q"}-${idx}-${option}`;
+                return (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={(e) => {
+                      e.currentTarget.blur();
+                      handleAnswer(option);
+                    }}
+                    onMouseUp={(e) => e.currentTarget.blur()}
+                    onTouchEnd={(e) => e.currentTarget.blur()}
+                    disabled={showResult}
+                    className={`answer-btn ${selectedAnswer === option ? "selected" : ""}`}
+                  >
+                    {option}
+                  </button>
+                );
+              })
             )}
 
             <button className="back-link skip-btn" type="button" onClick={handleSkip}>

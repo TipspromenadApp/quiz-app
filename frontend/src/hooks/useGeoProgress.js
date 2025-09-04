@@ -156,7 +156,7 @@ export function useGeoProgress() {
     setDistanceToTarget(null);
     startRef.current = null;
     pointTargetRef.current = null;
-    // keep prevPosRef/current position: we want smooth continuation
+    
   }
 
   function forceGetCurrent() {
@@ -205,7 +205,7 @@ export function useGeoProgress() {
   useEffect(() => () => clearWatch(), []);
 
   return {
-    // readings
+    
     moved,
     totalMoved,
     ready,
@@ -214,7 +214,7 @@ export function useGeoProgress() {
     distanceToTarget,
     position,
 
-    // controls
+ 
     startDistance,
     startToPoint,
     stopTracking,
@@ -222,11 +222,11 @@ export function useGeoProgress() {
     simulate,
     forceGetCurrent,
 
-    // meta
+ 
     mode,
     targetMeters,
 
-    // setters exposed (if you ever need them)
+   
     setTotalMoved,
     setPosition,
     setMoved,

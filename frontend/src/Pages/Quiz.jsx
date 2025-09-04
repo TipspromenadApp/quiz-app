@@ -517,6 +517,7 @@ const Quiz = () => {
         },
       });
     } else {
+      // Show affirmation and prepare next pool, BUT do not bump currentRound yet.
       setQuizFinished(true);
       setShowAffirmation(true);
       setUserAnswers([]);
@@ -524,7 +525,7 @@ const Quiz = () => {
       setScore(0);
       setQuizFinished(false);
 
-      const nextPoolIndex = currentRound;
+      const nextPoolIndex = currentRound; // currentRound is 1-based; next pool index equals currentRound
       const nextPool =
         poolRef.current[nextPoolIndex] ??
         poolRef.current[poolRef.current.length - 1] ??
@@ -536,7 +537,7 @@ const Quiz = () => {
       setWaitingForWalk(false);
       stopTracking();
       reset();
-      setCurrentRound((r) => r + 1);
+      // ⛔ removed: setCurrentRound(r => r + 1);
     }
   };
 
@@ -649,6 +650,13 @@ const Quiz = () => {
     }
     setShowAffirmation(true);
   };
+
+  // Clear any visual selection/focus when question or round changes
+  useEffect(() => {
+    setSelectedAnswer(null);
+    setShowResult(false);
+    setTimeout(() => document.activeElement?.blur?.(), 0);
+  }, [currentQuestionIndex, currentRound]);
 
   const showingQuestion =
     quizStarted &&
@@ -892,18 +900,29 @@ const movedThisQuestion = Math.max(0, (totalMoved ?? 0) - baseline);
               <strong>Fråga {currentQuestionIndex + 1}:</strong>{" "}
               {shuffledQuestions[currentQuestionIndex].text}
             </p>
-           
-            {shuffledQuestions[currentQuestionIndex]?.type === "mcq" &&
-              (shuffledQuestions[currentQuestionIndex]?.options || []).map((option, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => handleAnswerMCQ(option)}
-                  disabled={showResult}
-                  className={`answer-btn ${selectedAnswer === option ? "selected" : ""}`}
-                >
-                  {option}
-                </button>
-              ))}
+           {shuffledQuestions[currentQuestionIndex]?.type === "mcq" &&
+  (shuffledQuestions[currentQuestionIndex]?.options || []).map((option, idx) => {
+    const q = shuffledQuestions[currentQuestionIndex];
+    const key = `${currentRound}-${q?.id ?? "q"}-${idx}-${option}`;
+    return (
+      <button
+        key={key}
+        type="button"
+        onClick={(e) => {
+          e.currentTarget.blur();          
+          handleAnswerMCQ(option);
+        }}
+        onMouseUp={(e) => e.currentTarget.blur()}
+        onTouchEnd={(e) => e.currentTarget.blur()}
+        disabled={showResult}
+        className={`answer-btn ${selectedAnswer === option ? "selected" : ""}`}
+      >
+        {option}
+      </button>
+    );
+  })
+}
+
 
             {shuffledQuestions[currentQuestionIndex]?.type === "text" && (
               <div style={{ margin: "8px 0 12px" }}>
@@ -918,6 +937,8 @@ const movedThisQuestion = Math.max(0, (totalMoved ?? 0) - baseline);
                 <button
                   className="quiz-button"
                   onClick={handleAnswerTEXT}
+                  onMouseUp={(e) => e.currentTarget.blur()}
+                  onTouchEnd={(e) => e.currentTarget.blur()}
                   disabled={showResult || !textAnswer.trim()}
                   style={{ marginLeft: 10 }}
                 >

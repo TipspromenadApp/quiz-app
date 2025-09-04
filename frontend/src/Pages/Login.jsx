@@ -14,11 +14,9 @@ function Login() {
   const LOGIN_URL = `${API_BASE}/api/auth/login`;
 
   useEffect(() => {
-   
     const el = audioRef.current;
     if (el) {
       el.volume = 0.2;
-     
       const tryPlay = el.play?.();
       if (tryPlay && typeof tryPlay.catch === "function") {
         tryPlay.catch(() => {});
@@ -73,41 +71,41 @@ function Login() {
   };
 
   return (
-  <div className="login-page">
-    <div className="background-image"></div>
-    <audio ref={audioRef} src="/sounds/forest.mp3" autoPlay loop />
+    <div className="login-page">
+      <div className="background-image"></div>
+      <audio ref={audioRef} src="/sounds/forest.mp3" autoPlay loop />
 
-    <div className="login-card">
-      <h2>Logga in</h2>
-      {error && <p className="error-message">{error}</p>}
+      <div className="login-card">
+        <h2>Logga in</h2>
+        {error && <p className="error-message">{error}</p>}
 
-      <form onSubmit={handleLogin}>
-        <label>E-post</label>
-        <input
-          type="email"
-          placeholder="Ange e-post"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
+        <form onSubmit={handleLogin}>
+          <label>E-post</label>
+          <input
+            type="email"
+            placeholder="Ange e-post"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            className="email-input"
+          />
 
-        <label>Lösenord</label>
-        <input
-          type="password"
-          placeholder="Ange lösenord"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
+          <label>Lösenord</label>
+          <input
+            type="password"
+            placeholder="Ange lösenord"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
 
-        <button type="submit">Logga in</button>
-      </form>
+          <button type="submit">Logga in</button>
+        </form>
 
-      <Link to="/" className="back-link">← Tillbaka till start</Link>
+        <Link to="/" className="back-link">← Tillbaka till start</Link>
+      </div>
     </div>
-  </div>
-);
-
+  );
 }
 
 export default Login;
