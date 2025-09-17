@@ -137,11 +137,6 @@
   margin-bottom: 16px;
 }
 
-/* ────────────────────────────────────────────────
-   Mobile-friendly fixes (non-destructive)
-   ──────────────────────────────────────────────── */
-
-/* Make the page and card behave on phones without changing your style */
 .createq-page {
   min-height: 100svh;
   padding: max(12px, env(safe-area-inset-top)) 12px
@@ -154,12 +149,11 @@
 
 .content-box.create-card.create-question {
   width: 100%;
-  max-width: 560px;              /* cap on larger screens */
+  max-width: 560px;            
   margin: 0 auto;
   box-sizing: border-box;
 }
 
-/* Inputs: prevent iOS zoom + white caret like login page */
 .create-question .quiz-text-input,
 .create-question input[type="text"],
 .create-question textarea {
@@ -167,7 +161,6 @@
   caret-color: #fff;
 }
 
-/* Option rows: radio + text + remove button should wrap neatly */
 .option-row {
   display: flex;
   align-items: center;
@@ -181,7 +174,6 @@
 }
 .remove-btn { white-space: nowrap; }
 
-/* Footer buttons: wrap into grid on narrow screens */
 .form-footer {
   display: flex;
   flex-wrap: wrap;
@@ -196,7 +188,6 @@
   .content-box.create-card.create-question { padding: 12px; border-radius: 16px; }
 }
 
-/* Keep labels/heading readable but compact on small phones */
 @media (max-width: 380px) {
   .create-question .page-title { font-size: 1.4rem; }
   .field-label { font-size: 1rem; }

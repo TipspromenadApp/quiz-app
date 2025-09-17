@@ -213,7 +213,16 @@ namespace backend.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("BotName")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("BotScore")
+                        .HasColumnType("INTEGER");
+
                     b.Property<DateTime>("DateTaken")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("GameMode")
                         .HasColumnType("TEXT");
 
                     b.Property<int>("RoundNumber")

@@ -15,7 +15,12 @@ namespace quiz_app.Models
         public DateTime DateTaken { get; set; }
 
         public List<QuizAnswer> Answers { get; set; } = new();
+         public string? GameMode { get; set; }  
+    public string? BotName { get; set; }   
+    public int? BotScore { get; set; }
     }
+    
+    
 
     public class QuizAnswer
     {
@@ -27,7 +32,7 @@ namespace quiz_app.Models
         public int Round { get; set; }
         public string? QuestionId { get; set; }
         public string Question { get; set; } = "";
-        public string? Type { get; set; } 
+        public string? Type { get; set; }
         public string? SelectedAnswer { get; set; }
         public string? CorrectAnswer { get; set; }
         public bool? IsCorrect { get; set; }

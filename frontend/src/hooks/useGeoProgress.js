@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 
-/* --------- tiny math helpers --------- */
 function haversine(a, b) {
   if (!a || !b) return 0;
   const R = 6371000;
@@ -21,7 +20,6 @@ function offsetLatLon({ lat, lon }, dxMeters, dyMeters) {
   return { lat: lat + dLat, lon: lon + dLon };
 }
 
-/* --------- localStorage helpers (scoped) --------- */
 const GEO_NS = "geo:v1";
 function loadJSON(key, fallback) {
   try { const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : fallback; }
@@ -39,11 +37,11 @@ export function useGeoProgress() {
   const [mode, setMode] = useState("idle");
   const [targetMeters, setTargetMeters] = useState(null);
 
-  const [moved, setMoved] = useState(0);          // per-question gate distance
-  const [totalMoved, setTotalMoved] = useState(0); // cumulative distance across session
+  const [moved, setMoved] = useState(0);          
+  const [totalMoved, setTotalMoved] = useState(0); 
 
-  const startRef = useRef(null);     // per-question baseline (distance gate)
-  const prevPosRef = useRef(null);   // last GPS point for incremental steps
+  const startRef = useRef(null);     
+  const prevPosRef = useRef(null);   
 
   const pointTargetRef = useRef(null);
   const [distanceToTarget, setDistanceToTarget] = useState(null);
@@ -51,20 +49,18 @@ export function useGeoProgress() {
   const [ready, setReady] = useState(false);
   const watchIdRef = useRef(null);
 
-  /* --------- restore persisted totals/last position ONCE --------- */
   useEffect(() => {
     const saved = loadJSON(`${GEO_NS}:state`, null);
     if (saved && typeof saved.totalMoved === "number") {
       setTotalMoved(saved.totalMoved);
       if (saved.lastPosition && typeof saved.lastPosition.lat === "number" && typeof saved.lastPosition.lon === "number") {
-        // seed both UI state and the prev ref so the first GPS step is smooth
+       
         setPosition(saved.lastPosition);
         prevPosRef.current = saved.lastPosition;
       }
     }
   }, []);
 
-  /* --------- persist whenever totalMoved / position changes --------- */
   useEffect(() => {
     const payload = {
       totalMoved,
@@ -73,7 +69,6 @@ export function useGeoProgress() {
     saveJSON(`${GEO_NS}:state`, payload);
   }, [totalMoved, position]);
 
-  /* --------- geolocation wiring --------- */
   function clearWatch() {
     if (watchIdRef.current != null && navigator.geolocation?.clearWatch) {
       try { navigator.geolocation.clearWatch(watchIdRef.current); } catch {}
@@ -87,7 +82,6 @@ export function useGeoProgress() {
       (pos) => {
         const cur = { lat: pos.coords.latitude, lon: pos.coords.longitude };
 
-        // accumulate incremental step since previous fix
         if (prevPosRef.current) {
           const step = haversine(prevPosRef.current, cur);
           if (Number.isFinite(step)) setTotalMoved((t) => t + step);
@@ -99,7 +93,7 @@ export function useGeoProgress() {
         setError(null);
 
         if (mode === "distance") {
-          if (!startRef.current) startRef.current = cur; // set baseline on first fix for this question
+          if (!startRef.current) startRef.current = cur; 
           const dist = haversine(startRef.current, cur);
           setMoved((prev) => {
             const v = Math.max(prev, dist);
@@ -123,7 +117,7 @@ export function useGeoProgress() {
   function startDistance(thresholdMeters) {
     setMode("distance");
     setTargetMeters(Number(thresholdMeters) || 5);
-    setMoved(0);                 // reset per-question gate (OK)
+    setMoved(0);                 
     setReady(false);
     setDistanceToTarget(null);
     startRef.current = null;
@@ -147,7 +141,7 @@ export function useGeoProgress() {
   function stopTracking() { clearWatch(); }
 
   function reset() {
-    // IMPORTANT: do NOT zero totalMoved here
+   
     clearWatch();
     setMode("idle");
     setMoved(0);
@@ -214,7 +208,7 @@ export function useGeoProgress() {
     distanceToTarget,
     position,
 
- 
+  
     startDistance,
     startToPoint,
     stopTracking,
@@ -222,7 +216,7 @@ export function useGeoProgress() {
     simulate,
     forceGetCurrent,
 
- 
+   
     mode,
     targetMeters,
 

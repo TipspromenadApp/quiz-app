@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef } from "react";
 import "./quiz.css";
 import { Link, useNavigate } from "react-router-dom";
 import { useGeoProgress } from "../hooks/useGeoProgress";
@@ -14,6 +14,7 @@ function normalizeText(s) {
     .normalize("NFD")
     .replace(/\p{Diacritic}/gu, "");
 }
+
 const saveRoundResult = async (roundNumber, roundScore, questionCount, answers) => {
   try {
     const saved = JSON.parse(localStorage.getItem("user") || "null") || {};
@@ -150,6 +151,7 @@ function pushLocalHistory({ answersAll, rounds }) {
     console.warn("Failed to push local history:", e);
   }
 }
+
 const roundOneQuestions = [
   { id: 1, text: "Vilken av dessa drycker innehåller oftast koffein?", options: ["Apelsinjuice", "Vatten", "Te", "Mjölk"], correctAnswer: "Te", type: "mcq" },
   { id: 2, text: "Vad är sushi traditionellt inlindad i?", options: ["Sjögräs", "Sallad", "Rispapper", "Plast"], correctAnswer: "Sjögräs", type: "mcq" },
@@ -217,12 +219,164 @@ const roundFiveQuestions = [
 
 const WALK_THRESHOLDS = { "5": 5, "10": 10 };
 
+const adaptApiQuestion = (q) => {
+  const text = q?.text ?? q?.Text ?? "";
+  const options = q?.options ?? q?.Options ?? [];
+  let correctAnswer = q?.correctAnswer ?? q?.CorrectAnswer;
+  if (!correctAnswer && Array.isArray(options) && typeof q?.correctIndex === "number") {
+    correctAnswer = options[q.correctIndex] ?? "";
+  }
+  return { id: q?.id ?? crypto?.randomUUID?.() ?? text, text, type: "mcq", options, correctAnswer };
+};
+
+async function getWorkingGenUrlTemplate() {
+  const cacheKey = "quiz_workingGenTemplate";
+  const cached = localStorage.getItem(cacheKey);
+  if (cached) return cached;
+
+  const base = `${API_BASE}`.replace(/\/+$/, "");
+  const probes = [
+    "/api/QuestionGen/generate-by-round",
+    "/api/questiongen/generate-by-round",
+    "/api/QuestionGen/generateByRound",
+    "/api/questiongen/generateByRound",
+  ];
+
+  for (const path of probes) {
+    const url = `${base}${path}?round=1&count=1&salt=${Date.now()}`;
+    try {
+      const res = await fetch(url, { headers: { Accept: "application/json" }, cache: "no-store" });
+      if (res.ok) {
+        localStorage.setItem(cacheKey, path);
+        console.info("[AI] Using route:", path);
+        return path;
+      }
+    } catch {}
+  }
+
+  const fallback = "/api/QuestionGen/generate-by-round";
+  localStorage.setItem(cacheKey, fallback);
+  console.info("[AI] Falling back to route:", fallback);
+  return fallback;
+}
+
+const uniqueByText = (arr) => {
+  const seen = new Set();
+  const out = [];
+  for (const q of arr) {
+    const k = (q?.text ?? "").trim().toLowerCase();
+    if (!k || seen.has(k)) continue;
+    seen.add(k);
+    out.push(q);
+  }
+  return out;
+};
+
+const ALL_HANDWRITTEN = [
+  ...roundOneQuestions,
+  ...roundTwoQuestions,
+  ...roundThreeQuestions,
+  ...roundFourQuestions,
+  ...roundFiveQuestions,
+];
+
+function randomHandwritten(count) {
+  const copy = [...ALL_HANDWRITTEN];
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy.slice(0, Math.min(count, copy.length));
+}
+
+const textKey = (q) => (q?.text ?? "").trim().toLowerCase();
+
+function mergeUnique(dst, add) {
+  const seen = new Set(dst.map(textKey));
+  for (const q of add || []) {
+    const k = textKey(q);
+    if (!k || seen.has(k)) continue;
+    seen.add(k);
+    dst.push(q);
+  }
+  return dst;
+}
+
+function shuffleArray(array) {
+  const copy = [...array];
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+}
+
+function padQuestionsToCount(list, count) {
+  const out = uniqueByText(list || []);
+  if (out.length >= count) return shuffleArray(out).slice(0, count);
+
+  const fillers = randomHandwritten(count * 2);
+  for (const q of fillers) {
+    if (out.length >= count) break;
+    if (out.some((x) => textKey(x) === textKey(q))) continue;
+    out.push(q);
+  }
+  return shuffleArray(out).slice(0, Math.min(count, out.length));
+}
+
+async function fetchAiRound(roundNumber, count) {
+  const base = `${API_BASE}`.replace(/\/+$/, "");
+  const path = await getWorkingGenUrlTemplate();
+
+  const acc = [];
+  let lastErr;
+
+  for (let attempt = 0; attempt < 3 && acc.length < count; attempt++) {
+    const salt = `${Date.now()}_${Math.random().toString(36).slice(2)}`;
+    const url = `${base}${path}?round=${encodeURIComponent(roundNumber)}&count=${encodeURIComponent(count)}&salt=${encodeURIComponent(salt)}`;
+
+    try {
+      console.debug("[AI] GET", url);
+      const res = await fetch(url, { headers: { Accept: "application/json" }, cache: "no-store" });
+      if (!res.ok) {
+        lastErr = new Error(`GET ${path} -> ${res.status}`);
+        continue;
+      }
+      const data = await res.json();
+      const adapted = uniqueByText((Array.isArray(data) ? data : []).map(adaptApiQuestion));
+      if (adapted.length) {
+        mergeUnique(acc, adapted);
+        console.info("[AI] round fetched:", { roundNumber, got: acc.length });
+      } else {
+        lastErr = new Error("Empty array");
+      }
+    } catch (e) {
+      lastErr = e;
+    }
+  }
+
+  if (acc.length < count) {
+    console.info("[AI] Fewer than requested; padding from handwritten.", { roundNumber, have: acc.length, need: count, lastErr: String(lastErr || "") });
+  }
+
+  return padQuestionsToCount(acc, count);
+}
+
 const Quiz = () => {
   const navigate = useNavigate();
 
-  const initialSource = (localStorage.getItem("pref_quizSource") || "general").trim();
-  const [quizSource] = useState(initialSource);
  
+  const stored = (localStorage.getItem("pref_quizSource") || "ai-simple").trim();
+  const initialSource = (stored === "personal" || stored === "ai-simple") ? stored : "ai-simple";
+
+  const [quizSource, setQuizSource] = useState(initialSource);
+  useEffect(() => {
+    
+    const safe = (quizSource === "personal" || quizSource === "ai-simple") ? quizSource : "ai-simple";
+    localStorage.setItem("pref_quizSource", safe);
+    if (safe !== quizSource) setQuizSource(safe);
+  }, [quizSource]);
+
   const poolRef = useRef([]);
 
   const [quizStarted, setQuizStarted] = useState(false);
@@ -232,7 +386,7 @@ const Quiz = () => {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [shuffledQuestions, setShuffledQuestions] = useState([]);
   const [selectedAnswer, setSelectedAnswer] = useState(null);
-  const [textAnswer, setTextAnswer] = useState("");             
+  const [textAnswer, setTextAnswer] = useState("");
   const [showResult, setShowResult] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
   const [score, setScore] = useState(0);
@@ -303,21 +457,12 @@ const Quiz = () => {
     mode,
   } = useGeoProgress();
 
-  const shuffleArray = (array) => {
-    const copy = [...array];
-    for (let i = copy.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [copy[i], copy[j]] = [copy[j], copy[i]];
-    }
-    return copy;
-  };
-
   const chunk = (arr, size) => {
     const out = [];
     for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
     return out;
   };
-  
+
   const normalizePersonal = (q, idx) => {
     const id = q.id ?? q.questionId ?? idx + 1;
     const text = q.text ?? q.question ?? "";
@@ -354,7 +499,7 @@ const Quiz = () => {
         norm.options.includes(correctAnswer) && correctAnswer
           ? String(correctAnswer)
           : norm.options[0] ?? "";
-    
+
       if (norm.options.length < 2) {
         norm.type = "text";
         norm.sampleAnswer = norm.correctAnswer || sampleAnswer || "";
@@ -369,19 +514,19 @@ const Quiz = () => {
 
   function proceedToNextQuestion() {
     setCurrentQuestionIndex((p) => p + 1);
-    setTextAnswer(""); 
+    setTextAnswer("");
   }
 
   function primeRoundQuestions(bank) {
-    const withShuffledOptions = bank.map((q) =>
+    const withShuffledOptions = (bank || []).map((q) =>
       q.type === "mcq"
         ? { ...q, options: shuffleArray(q.options || []) }
         : q
     );
-    const count = Math.min(Number(questionsPerRound) || 10, withShuffledOptions.length);
-    const limited = shuffleArray(withShuffledOptions).slice(0, count);
-    currentRoundTotalRef.current = count;
-    setShuffledQuestions(limited);
+    const target = Math.max(1, Number(questionsPerRound) || 10);
+    const filled = padQuestionsToCount(withShuffledOptions, target);
+    currentRoundTotalRef.current = filled.length;
+    setShuffledQuestions(filled);
   }
 
   function gateNextQuestion() {
@@ -395,18 +540,17 @@ const Quiz = () => {
     startDistance(target);
     forceGetCurrent();
   }
- useEffect(() => {
-  if (!waitingForWalk) return;
-  const gateTarget = WALK_THRESHOLDS[uiThreshold] ?? 5;
-  const baseline = gateBaselineRef.current ?? 0;          
-  const progressed = Math.max(0, (totalMoved ?? 0) - baseline);
-  if (progressed >= gateTarget) {
-    stopTracking();
-    setWaitingForWalk(false);
-    proceedToNextQuestion();
-  }
-}, [waitingForWalk, totalMoved, uiThreshold, stopTracking]);
-
+  useEffect(() => {
+    if (!waitingForWalk) return;
+    const gateTarget = WALK_THRESHOLDS[uiThreshold] ?? 5;
+    const baseline = gateBaselineRef.current ?? 0;
+    const progressed = Math.max(0, (totalMoved ?? 0) - baseline);
+    if (progressed >= gateTarget) {
+      stopTracking();
+      setWaitingForWalk(false);
+      proceedToNextQuestion();
+    }
+  }, [waitingForWalk, totalMoved, uiThreshold, stopTracking]);
 
   useEffect(() => () => { stopTracking(); }, [stopTracking]);
 
@@ -420,7 +564,10 @@ const Quiz = () => {
     if (p && p.catch) p.catch(() => {});
   }, []);
 
-  const buildPoolsForRun = () => {
+  const buildPoolsForRun = async () => {
+    const r = Math.min(5, Number(rounds) || 5);
+    const n = Math.max(1, Number(questionsPerRound) || 10);
+
     if (quizSource === "personal") {
       const raw = loadUserQuestions() || [];
       const normalized = raw.map((q, i) => normalizePersonal(q, i)).filter(q => q.text);
@@ -431,22 +578,19 @@ const Quiz = () => {
       const perRound = Math.max(1, Number(questionsPerRound) || 10);
       const shuffled = shuffleArray(normalized);
       const chunks = chunk(shuffled, perRound);
-      while (chunks.length < Number(rounds)) {
+      while (chunks.length < Number(r)) {
         chunks.push(...chunk(shuffleArray(normalized), perRound));
       }
-      return chunks.slice(0, Number(rounds));
-    } else {
-      return [
-        roundOneQuestions,
-        roundTwoQuestions,
-        roundThreeQuestions,
-        roundFourQuestions,
-        roundFiveQuestions,
-      ];
+      return chunks.slice(0, Number(r)).map(c => padQuestionsToCount(c, perRound));
     }
+
+    const all = await Promise.all(
+      Array.from({ length: r }, (_, i) => fetchAiRound(i + 1, n))
+    );
+    return all.map((c) => padQuestionsToCount(c, n));
   };
 
-  const handleStart = () => {
+  const handleStart = async () => {
     localStorage.removeItem("finalAnswers");
     localStorage.removeItem("finalScore");
 
@@ -462,7 +606,7 @@ const Quiz = () => {
     setUserAnswers([]);
     setAllAnswers([]);
 
-    poolRef.current = buildPoolsForRun();
+    poolRef.current = await buildPoolsForRun();
     const firstPool = poolRef.current[0] || [];
     primeRoundQuestions(firstPool);
 
@@ -517,7 +661,6 @@ const Quiz = () => {
         },
       });
     } else {
-      // Show affirmation and prepare next pool, BUT do not bump currentRound yet.
       setQuizFinished(true);
       setShowAffirmation(true);
       setUserAnswers([]);
@@ -525,7 +668,7 @@ const Quiz = () => {
       setScore(0);
       setQuizFinished(false);
 
-      const nextPoolIndex = currentRound; // currentRound is 1-based; next pool index equals currentRound
+      const nextPoolIndex = currentRound;
       const nextPool =
         poolRef.current[nextPoolIndex] ??
         poolRef.current[poolRef.current.length - 1] ??
@@ -537,7 +680,6 @@ const Quiz = () => {
       setWaitingForWalk(false);
       stopTracking();
       reset();
-      // ⛔ removed: setCurrentRound(r => r + 1);
     }
   };
 
@@ -651,7 +793,6 @@ const Quiz = () => {
     setShowAffirmation(true);
   };
 
-  // Clear any visual selection/focus when question or round changes
   useEffect(() => {
     setSelectedAnswer(null);
     setShowResult(false);
@@ -668,10 +809,9 @@ const Quiz = () => {
 
   const roundMovedDisplay = Math.max(0, (totalMoved ?? 0) - (roundOffset ?? 0));
   const gateTarget = WALK_THRESHOLDS[uiThreshold] ?? 5;
-  
- const baseline = gateBaselineRef.current ?? 0;             
-const movedThisQuestion = Math.max(0, (totalMoved ?? 0) - baseline);
 
+  const baseline = gateBaselineRef.current ?? 0;
+  const movedThisQuestion = Math.max(0, (totalMoved ?? 0) - baseline);
 
   return (
     <div className="start-page">
@@ -686,6 +826,33 @@ const movedThisQuestion = Math.max(0, (totalMoved ?? 0) - baseline);
 
         {!quizStarted && (
           <>
+            <div style={{ margin: "8px 0 6px", textAlign: "center" }}>
+              <label style={{ marginRight: 14 }}>
+                <input
+                  type="radio"
+                  name="source"
+                  checked={quizSource === "personal"}
+                  onChange={() => {
+                    setQuizSource("personal");
+                    localStorage.setItem("pref_quizSource", "personal");
+                  }}
+                />{" "}
+                Egna frågor
+              </label>
+              <label style={{ marginRight: 14 }}>
+                <input
+                  type="radio"
+                  name="source"
+                  checked={quizSource === "ai-simple"}
+                  onChange={() => {
+                    setQuizSource("ai-simple");
+                    localStorage.setItem("pref_quizSource", "ai-simple");
+                  }}
+                />{" "}
+                AI–frågor
+              </label>
+            </div>
+
             <label htmlFor="rounds" style={{ fontSize: "18px" }}>
               Ställ in din väg: Hur många rundor och hur många frågor vill du möta?
             </label>
@@ -900,29 +1067,28 @@ const movedThisQuestion = Math.max(0, (totalMoved ?? 0) - baseline);
               <strong>Fråga {currentQuestionIndex + 1}:</strong>{" "}
               {shuffledQuestions[currentQuestionIndex].text}
             </p>
-           {shuffledQuestions[currentQuestionIndex]?.type === "mcq" &&
-  (shuffledQuestions[currentQuestionIndex]?.options || []).map((option, idx) => {
-    const q = shuffledQuestions[currentQuestionIndex];
-    const key = `${currentRound}-${q?.id ?? "q"}-${idx}-${option}`;
-    return (
-      <button
-        key={key}
-        type="button"
-        onClick={(e) => {
-          e.currentTarget.blur();          
-          handleAnswerMCQ(option);
-        }}
-        onMouseUp={(e) => e.currentTarget.blur()}
-        onTouchEnd={(e) => e.currentTarget.blur()}
-        disabled={showResult}
-        className={`answer-btn ${selectedAnswer === option ? "selected" : ""}`}
-      >
-        {option}
-      </button>
-    );
-  })
-}
-
+            {shuffledQuestions[currentQuestionIndex]?.type === "mcq" &&
+              (shuffledQuestions[currentQuestionIndex]?.options || []).map((option, idx) => {
+                const q = shuffledQuestions[currentQuestionIndex];
+                const key = `${currentRound}-${q?.id ?? "q"}-${idx}-${option}`;
+                return (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={(e) => {
+                      e.currentTarget.blur();
+                      handleAnswerMCQ(option);
+                    }}
+                    onMouseUp={(e) => e.currentTarget.blur()}
+                    onTouchEnd={(e) => e.currentTarget.blur()}
+                    disabled={showResult}
+                    className={`answer-btn ${selectedAnswer === option ? "selected" : ""}`}
+                  >
+                    {option}
+                  </button>
+                );
+              })
+            }
 
             {shuffledQuestions[currentQuestionIndex]?.type === "text" && (
               <div style={{ margin: "8px 0 12px" }}>

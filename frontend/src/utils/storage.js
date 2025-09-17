@@ -6,9 +6,9 @@ export function loadJSON(key, fallback = null) {
     return fallback;
   }
 }
-export function saveJSON(key, value) {
-  try { localStorage.setItem(key, JSON.stringify(value)); } catch {}
-}
-export function removeKey(key) {
-  try { localStorage.removeItem(key); } catch {}
+
+export function saveJSON(key, val) {
+  try {
+    localStorage.setItem(key, JSON.stringify(val));
+  } catch {}
 }

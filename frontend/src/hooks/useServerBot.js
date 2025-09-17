@@ -1,134 +1,156 @@
-
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:5249";
 
+
+const BOT_MOVE_PATHS = ["/api/bot/move", "/api/Bot/move"];
+
+const clampDiff = (d) => {
+  const v = String(d || "normal").toLowerCase();
+  return v === "easy" || v === "hard" ? v : "normal";
+};
+const arrayOfStrings = (maybe) =>
+  Array.isArray(maybe) ? maybe.map((x) => String(x ?? "")).filter(Boolean) : [];
+
+function delay(ms, signal) {
+  return new Promise((res, rej) => {
+    const id = setTimeout(res, ms);
+    signal?.addEventListener("abort", () => {
+      clearTimeout(id);
+      rej(new DOMException("Aborted", "AbortError"));
+    });
+  });
+}
+
+const BAN_KEY_UNTIL = "bot_move_disabled_until";
+function isBanned() {
+  const until = Number(localStorage.getItem(BAN_KEY_UNTIL) || 0);
+  return Date.now() < until;
+}
+function banNow(hours = 12) {
+  localStorage.setItem(BAN_KEY_UNTIL, String(Date.now() + hours * 3600 * 1000));
+}
+
+
+async function tryServerMove(question, diff, signal) {
+  const correctText =
+    typeof question?.correctAnswer === "string" && question.correctAnswer.trim()
+      ? question.correctAnswer
+      : (Array.isArray(question?.options) && typeof question?.correctIndex === "number"
+          ? (question.options[question.correctIndex] ?? "")
+          : "");
+
+  const body = {
+    questionId: String(question?.id ?? ""),
+    options: arrayOfStrings(question?.options),
+    difficulty: String(diff || "normal"),
+    correctAnswer: String(correctText || ""),
+  };
+
+  const base = `${API_BASE}`.replace(/\/+$/, "");
+  for (const path of BOT_MOVE_PATHS) {
+    const url = `${base}${path}`;
+    try {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify(body),
+        signal,
+      });
+      if (res.ok) {
+        const data = await res.json().catch(() => ({}));
+        const answerIndex =
+          typeof data.answerIndex === "number" ? data.answerIndex :
+          typeof data.Index === "number" ? data.Index : -1;
+        const isCorrect =
+          typeof data.isCorrect === "boolean" ? data.isCorrect : undefined;
+        const answerText =
+          typeof data.answerText === "string" ? data.answerText : undefined;
+        return { answerIndex, isCorrect, answerText };
+      }
+      if (res.status === 400) { banNow(12); return null; }
+    } catch (err) {
+      if (err?.name === "AbortError") return null;
+      
+    }
+  }
+  return null;
+}
+
+function localPick(q, diff) {
+  const opts = Array.isArray(q?.options) ? q.options : [];
+  if (!opts.length) return { answerIndex: -1, isCorrect: false, answerText: "" };
+
+  const correctIndex =
+    typeof q?.correctIndex === "number"
+      ? q.correctIndex
+      : opts.findIndex((o) => String(o) === String(q?.correctAnswer));
+
+  const ACC = { easy: 0.30, normal: 0.85, hard: 0.95 }[diff] ?? 0.85;
+  const canBeCorrect = correctIndex >= 0;
+  const willBeCorrect = canBeCorrect && Math.random() < ACC;
+
+  if (willBeCorrect)
+    return { answerIndex: correctIndex, isCorrect: true, answerText: opts[correctIndex] };
+
+  const wrongs = opts.map((_, i) => i).filter((i) => i !== correctIndex);
+  const idx = wrongs.length ? wrongs[Math.floor(Math.random() * wrongs.length)] : 0;
+  return {
+    answerIndex: idx,
+    isCorrect: canBeCorrect ? idx === correctIndex : false,
+    answerText: opts[idx] ?? ""
+  };
+}
+
 export function useServerBot({
-  runKey,                    
-  question,                  
-  difficulty = "normal",     
+  runKey,
+  question,
+  difficulty = "normal",
   enable = true,
   onThinkingChange = () => {},
   onRevealed = () => {},
 }) {
+  const diff = clampDiff(difficulty);
+  const MIN_LATENCY = { easy: 1800, normal: 2400, hard: 1800 }[diff] ?? 2200;
+
   const abortRef = useRef(null);
-  const timeoutRef = useRef(null);
+  const lastKeyRef = useRef(null);
 
-  const d = String(difficulty || "normal").toLowerCase();
-  const MIN_LATENCY = { easy: 5000, normal: 3000, hard: 2000 }[d] ?? 3000;
-  const HARD_TIMEOUT = MIN_LATENCY + 2000;
-
-  const delay = (ms, signal) =>
-    new Promise((res, rej) => {
-      const id = setTimeout(res, ms);
-      signal?.addEventListener("abort", () => {
-        clearTimeout(id);
-        rej(new DOMException("Aborted", "AbortError"));
-      });
-    });
-
-  
-  const localPick = (q) => {
-    const opts = Array.isArray(q?.options) ? q.options : [];
-    if (!opts.length) return { answerIndex: -1, isCorrect: false };
-    const correctIndex =
-      typeof q?.correctIndex === "number"
-        ? q.correctIndex
-        : opts.findIndex((o) => String(o) === String(q?.correctAnswer));
-    const ACC = { easy: 0.2, normal: 0.7, hard: 0.9 }[d] ?? 0.7;
-    const canBeCorrect = correctIndex >= 0;
-    const willBeCorrect = canBeCorrect && Math.random() < ACC;
-
-    if (willBeCorrect) return { answerIndex: correctIndex, isCorrect: true };
-
-    const wrongs = opts.map((_, i) => i).filter((i) => i !== correctIndex);
-    const idx = wrongs.length ? wrongs[Math.floor(Math.random() * wrongs.length)] : 0;
-    return { answerIndex: idx, isCorrect: canBeCorrect ? idx === correctIndex : false };
-  };
+  const wireQ = useMemo(() => {
+    if (!question || typeof question !== "object") return null;
+    const text = String(question.text ?? question.question ?? "").trim();
+    const options = arrayOfStrings(question.options);
+    const id = String((question.id ?? text) || "q");
+    return {
+      id,
+      text,
+      options,
+      correctAnswer: question.correctAnswer,
+      correctIndex: question.correctIndex,
+    };
+  }, [question]);
 
   useEffect(() => {
-    if (!enable || !question || !runKey) return;
+    if (!enable || !runKey || !wireQ) return;
+    if (lastKeyRef.current === runKey) return;
+    lastKeyRef.current = runKey;
 
- 
-    abortRef.current?.abort();
+    abortRef.current?.abort?.();
     const controller = new AbortController();
     abortRef.current = controller;
 
-    onThinkingChange(true);
-    const startedAt = Date.now();
-   
-    timeoutRef.current = setTimeout(() => {
-      if (controller.signal.aborted) return;
-      
-      const pick = localPick(question);
-      onThinkingChange(false);
-      onRevealed({ ...pick, revealedAt: Date.now() });
-      controller.abort();
-    }, HARD_TIMEOUT);
+    const started = Date.now();
+    onThinkingChange(true); 
 
     (async () => {
       let best = null;
-      try {
-        
-        const res = await fetch(`${API_BASE}/api/bot/move`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-         body: JSON.stringify({
- 
-  questionId: question.id ?? null,
-  QuestionId: question.id ?? null,
-  text: question.text ?? question.question ?? "",
-  Text: question.text ?? question.question ?? "",
-  question: question.text ?? question.question ?? "",
-  Question: question.text ?? question.question ?? "",
 
- 
-  options: Array.isArray(question.options) ? question.options : [],
-  Options: Array.isArray(question.options) ? question.options : [],
-
- 
-  difficulty: d,
-  Difficulty: d,
-  skill: d,
-  Skill: d,
-}),
-});
-        if (res.ok) {
-          const data = await res.json().catch(() => ({}));
-          const answerIndex =
-            typeof data.answerIndex === "number"
-              ? data.answerIndex
-              : typeof data.index === "number"
-              ? data.index
-              : typeof data.correctIndex === "number"
-              ? data.correctIndex
-              : -1;
-
-          const opts = Array.isArray(question.options) ? question.options : [];
-          const picked = answerIndex >= 0 ? opts[answerIndex] : undefined;
-          const inferred =
-            typeof question.correctAnswer === "string"
-              ? picked === question.correctAnswer
-              : false;
-
-          best = {
-            answerIndex,
-            isCorrect:
-              typeof data.isCorrect === "boolean"
-                ? data.isCorrect
-                : inferred,
-          };
-        } else {
-          
-          best = localPick(question);
-        }
-      } catch (e) {
-        if (controller.signal.aborted) return;
-        best = localPick(question);
+      if (!isBanned() && wireQ.options && wireQ.options.length > 0) {
+        best = await tryServerMove(wireQ, diff, controller.signal);
       }
+      if (!best) best = localPick(wireQ, diff);
 
-    
-      const elapsed = Date.now() - startedAt;
+      const elapsed = Date.now() - started;
       try {
         await delay(Math.max(0, MIN_LATENCY - elapsed), controller.signal);
       } catch {
@@ -136,17 +158,17 @@ export function useServerBot({
       }
 
       if (!controller.signal.aborted) {
-        clearTimeout(timeoutRef.current);
-        onThinkingChange(false);
+       
         onRevealed({ ...best, revealedAt: Date.now() });
       }
     })();
 
     return () => {
-      clearTimeout(timeoutRef.current);
       controller.abort();
+   
       onThinkingChange(false);
     };
-    
-  }, [runKey, question?.id, d, enable]);
+  }, [enable, runKey, wireQ, diff, onThinkingChange, onRevealed]);
 }
+
+export default useServerBot;

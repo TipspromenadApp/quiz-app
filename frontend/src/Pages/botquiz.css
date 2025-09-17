@@ -1,17 +1,15 @@
-
 .bot-page {
   position: relative;
-  min-height: 100vh;
+  min-height: 100dvh;
+  color: #fff;
 }
 
-.bot-bg{
+.bot-bg {
   position: fixed;
   inset: 0;
   z-index: -1;
   background-image:
-    
     linear-gradient(rgba(0,0,0,0.44), rgba(0,0,0,0.44)),
-   
     radial-gradient(120% 90% at 50% 32%,
       rgba(0,0,0,0) 0%,
       rgba(0,0,0,0.16) 60%,
@@ -24,14 +22,26 @@
   opacity: 0;
   transition: opacity 3200ms ease-in;
 }
-.bot-bg.is-visible{ opacity: 1; }
+.bot-bg.is-visible { opacity: 1; }
 
+.bot-shell {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: 40px 16px;
+}
 
-.bot-page .frosty-container{
-  background: rgba(0,0,0,0.34);               
-  border: 1px solid rgba(255,255,255,0.18);
-  border-radius: 20px;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,.06);
+.frosty-container {
+  max-width: 900px;
+  margin: 0 auto;            
+  padding: 28px;
+  background: rgba(0,0,0,.35);
+  border: 1px solid rgba(255,255,255,.22);
+  border-radius: 22px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 20px 60px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.06);
+  text-align: center;
 }
 
 .compact-row {
@@ -42,11 +52,7 @@
   margin: 8px 0;
   flex-wrap: wrap;
 }
-
-.two-groups .inline-setting {
-  margin: 0 10px;
-}
-
+.two-groups .inline-setting { margin: 0 10px; }
 .no-border { border: none; padding: 0; margin: 0; }
 .mini-legend { font-size: 14px; opacity: .9; text-align: center; margin-bottom: 6px; }
 
@@ -87,59 +93,26 @@
 
 .tiny-select {
   appearance: none;
-  padding: 10px 36px 10px 16px;  
-  min-width: 140px;
-  border-radius: 999px;          
-  border: 1px solid rgba(255,255,255,0.45);
-
-  background: rgba(255,255,255,0.12); 
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-
-  color: #fff;                    
-  font-size: 15px;
-  font-weight: 500;
-  outline: none;
-  text-shadow: 0 1px 2px rgba(0,0,0,.4);
-
-  transition: all 0.3s ease;
-}
-
-.pill-select {
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 12'><path fill='white' d='M2 0l8 8 8-8 2 2-10 10L0 2z'/></svg>");
-  background-repeat: no-repeat;
-  background-position: right 14px center;
-  background-size: 12px 12px;
-}
-
-.tiny-select {
-  appearance: none;
   padding: 8px 32px 8px 14px;
   min-width: 120px;
-
-  border-radius: 999px;                
+  border-radius: 999px;
   border: 1px solid rgba(255,255,255,0.45);
-
-  background: rgba(255,255,255,0.12);   
+  background: rgba(255,255,255,0.12);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
-
   color: #fff;
   font-size: 14px;
   font-weight: 500;
   text-shadow: 0 1px 2px rgba(0,0,0,.35);
-
   outline: none;
   transition: all 0.3s ease;
 }
-
 .pill-select {
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 12'><path fill='white' d='M2 0l8 8 8-8 2 2-10 10L0 2z'/></svg>");
   background-repeat: no-repeat;
   background-position: right 12px center;
   background-size: 12px 12px;
 }
-
 .tiny-select:hover {
   background: rgba(255,255,255,0.18);
   border-color: rgba(255,255,255,0.65);
@@ -148,25 +121,12 @@
   box-shadow: 0 0 8px rgba(255,255,255,0.45);
   border-color: rgba(255,255,255,0.8);
 }
-
 .tiny-select option {
-  background: rgba(0,0,0,0.6); 
+  background: rgba(0,0,0,0.6);
   color: #fff;
   padding: 10px;
   font-size: 15px;
 }
-
-.tiny-select {
-  border-radius: 999px; 
-}
-
-.tiny-select::-webkit-dropdown-menu,
-.tiny-select::-moz-dropdown-menu {
-  border-radius: 12px;  
-  overflow: hidden;
-}
-
-
 
 .walk-distance {
   display: inline-flex;
@@ -189,26 +149,4 @@
 @media (max-width: 720px) {
   .compact-field { font-size: 13px; }
   .tiny-select { min-width: 112px; }
-}
-
-.bot-page { position: relative; min-height: 100vh; color: #fff; }
-.bot-bg{
-  position: fixed; inset: 0; z-index: -1;
-  background-image:
-    linear-gradient(rgba(0,0,0,.28), rgba(0,0,0,.28)),
-    url("/images/ocean.jpg");
-  background-size: cover; background-position: center; background-repeat: no-repeat;
-  opacity: 0; transition: opacity 2400ms ease-in;
-}
-.bot-bg.is-visible{ opacity: 1; }
-
-.frosty-container{
-  max-width: 900px; margin: 40px auto; padding: 28px;
-  background: rgba(0,0,0,.35);
-  border: 1px solid rgba(255,255,255,.22);
-  border-radius: 22px;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  box-shadow: 0 20px 60px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.06);
-  text-align: center;
 }

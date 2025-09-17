@@ -9,7 +9,6 @@ export function usePersistedState(key, initialValue) {
   });
 
   useEffect(() => {
-    
     if (!didHydrate.current) {
       didHydrate.current = true;
       return;

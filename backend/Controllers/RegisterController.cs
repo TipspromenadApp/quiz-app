@@ -23,8 +23,7 @@ namespace quiz_app.Controllers
             {
                 return BadRequest("User with this email already exists.");
             }
-
-            // Save hashed password    
+  
             var newUser = new User
             {
                 Username = user.Username,

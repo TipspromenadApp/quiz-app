@@ -76,18 +76,15 @@
 
   font-size: 16px;
 
-  /* change cursor color */
-  caret-color: #fff;  /* or #ccc, or your accent */
+  caret-color: #fff; 
 }
 
-/* extra insurance for iOS focus ring */
 .login-card input:focus {
   outline: none !important;
   box-shadow: none !important;
   border-color: #fff;
 }
 
-/* autofill fix */
 .login-card input:-webkit-autofill,
 .login-card input:-webkit-autofill:hover,
 .login-card input:-webkit-autofill:focus {

@@ -1,11 +1,11 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using quiz_app.Dtos;
 using quiz_app.Models;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using quiz_app.Dtos; 
-
 
 namespace quiz_app.Controllers
 {
@@ -19,6 +19,7 @@ namespace quiz_app.Controllers
         {
             _context = context;
         }
+
         [HttpPost]
         public async Task<IActionResult> Save([FromBody] SaveQuizResultRequest req)
         {
@@ -28,21 +29,26 @@ namespace quiz_app.Controllers
 
             var entity = new QuizResult
             {
-                UserName = req.UserName.Trim(),
-                RoundNumber = req.RoundNumber,
-                Score = req.Score,
+                UserName       = req.UserName.Trim(),
+                RoundNumber    = req.RoundNumber,
+                Score          = req.Score,
                 TotalQuestions = req.TotalQuestions,
-                DateTaken = req.DateTaken == default ? DateTime.UtcNow : req.DateTaken,
+                DateTaken      = req.DateTaken == default ? DateTime.UtcNow : req.DateTaken,
+
+                GameMode = string.IsNullOrWhiteSpace(req.GameMode) ? "solo" : req.GameMode.Trim(),
+                BotName  = string.IsNullOrWhiteSpace(req.BotName) ? null : req.BotName,
+                BotScore = req.BotScore,
+
                 Answers = req.Answers?.Select(a => new QuizAnswer
                 {
-                    Round = a.Round,
-                    QuestionId = a.QuestionId,
-                    Question = a.Question,
-                    Type = a.Type,
+                    Round          = a.Round,
+                    QuestionId     = a.QuestionId,
+                    Question       = a.Question,
+                    Type           = a.Type,
                     SelectedAnswer = a.SelectedAnswer,
-                    CorrectAnswer = a.CorrectAnswer,
-                    IsCorrect = a.IsCorrect,
-                    UserAnswer = a.UserAnswer
+                    CorrectAnswer  = a.CorrectAnswer,
+                    IsCorrect      = a.IsCorrect,
+                    UserAnswer     = a.UserAnswer
                 }).ToList() ?? new List<QuizAnswer>()
             };
 
@@ -51,7 +57,22 @@ namespace quiz_app.Controllers
             return Ok(entity.Id);
         }
 
+        [HttpGet("debug/last/{userName}")]
+        public async Task<IActionResult> DebugLast(string userName)
+        {
+            var x = await _context.QuizResults
+                .Where(r => r.UserName == userName)
+                .OrderByDescending(r => r.DateTaken)
+                .Select(r => new
+                {
+                    r.Id, r.UserName, r.RoundNumber, r.Score, r.TotalQuestions, r.DateTaken,
+                    r.GameMode, r.BotName, r.BotScore
+                })
+                .FirstOrDefaultAsync();
 
+            if (x == null) return Ok(new { });
+            return Ok(x);
+        }
 
         [HttpGet("progress/{userName}")]
         public async Task<IActionResult> GetUserProgress(string userName)
@@ -64,6 +85,7 @@ namespace quiz_app.Controllers
 
             return Ok(new { roundsCompleted, totalRounds = 5 });
         }
+
         [HttpGet]
         public async Task<ActionResult<IEnumerable<QuizResult>>> GetResults()
         {
@@ -75,71 +97,73 @@ namespace quiz_app.Controllers
             return Ok(results);
         }
 
-[HttpGet("{userName}")]
-public async Task<IActionResult> GetForUser(string userName)
-{
-    var items = await _context.QuizResults
-        .Where(x => x.UserName == userName)
-        .Include(x => x.Answers)
-        .OrderByDescending(x => x.DateTaken)
-        .ToListAsync();
+        [HttpGet("{userName}")]
+        public async Task<IActionResult> GetForUser(string userName)
+        {
+            var items = await _context.QuizResults
+                .Where(x => x.UserName == userName)
+                .Include(x => x.Answers)
+                .OrderByDescending(x => x.DateTaken)
+                .ToListAsync();
 
-    return Ok(items);
-}
-[HttpGet("{userName}/paged")]
-public async Task<IActionResult> GetForUserPaged(
-    string userName,
-    [FromQuery] int page = 1,
-    [FromQuery] int pageSize = 20)
-{
-    if (page < 1) page = 1;
-    if (pageSize <= 0 || pageSize > 200) pageSize = 20;
+            return Ok(items);
+        }
 
-    var baseQuery = _context.QuizResults
-        .Where(x => x.UserName == userName)
-        .OrderByDescending(x => x.DateTaken);
+        [HttpGet("{userName}/paged")]
+        public async Task<IActionResult> GetForUserPaged(
+            string userName,
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 20)
+        {
+            if (page < 1) page = 1;
+            if (pageSize <= 0 || pageSize > 200) pageSize = 20;
 
-    var total = await baseQuery.CountAsync();
-    var items = await baseQuery
-        .Skip((page - 1) * pageSize)
-        .Take(pageSize)
-        .Include(x => x.Answers)
-        .ToListAsync();
+            var baseQuery = _context.QuizResults
+                .Where(x => x.UserName == userName)
+                .OrderByDescending(x => x.DateTaken);
 
-    return Ok(new { total, page, pageSize, items });
-}
-[HttpDelete("{id:int}")]
-public async Task<IActionResult> DeleteOne(int id)
-{
-    var entity = await _context.QuizResults
-        .Include(x => x.Answers)
-        .FirstOrDefaultAsync(x => x.Id == id);
+            var total = await baseQuery.CountAsync();
+            var items = await baseQuery
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Include(x => x.Answers)
+                .ToListAsync();
 
-    if (entity == null) return NotFound();
-    
-    _context.RemoveRange(entity.Answers);
-    _context.QuizResults.Remove(entity);
+            return Ok(new { total, page, pageSize, items });
+        }
 
-    await _context.SaveChangesAsync();
-    return NoContent();
-}
-[HttpDelete("user/{userName}")]
-public async Task<IActionResult> DeleteAllForUser(string userName)
-{
-    var rounds = await _context.QuizResults
-        .Where(x => x.UserName == userName)
-        .Include(x => x.Answers)
-        .ToListAsync();
+        [HttpDelete("{id:int}")]
+        public async Task<IActionResult> DeleteOne(int id)
+        {
+            var entity = await _context.QuizResults
+                .Include(x => x.Answers)
+                .FirstOrDefaultAsync(x => x.Id == id);
 
-    if (rounds.Count == 0) return NoContent();
+            if (entity == null) return NotFound();
 
-    foreach (var r in rounds)
-        _context.RemoveRange(r.Answers);
+            _context.RemoveRange(entity.Answers);
+            _context.QuizResults.Remove(entity);
 
-    _context.QuizResults.RemoveRange(rounds);
-    await _context.SaveChangesAsync();
-    return NoContent();
-}
+            await _context.SaveChangesAsync();
+            return NoContent();
+        }
 
+        [HttpDelete("user/{userName}")]
+        public async Task<IActionResult> DeleteAllForUser(string userName)
+        {
+            var rounds = await _context.QuizResults
+                .Where(x => x.UserName == userName)
+                .Include(x => x.Answers)
+                .ToListAsync();
+
+            if (rounds.Count == 0) return NoContent();
+
+            foreach (var r in rounds)
+                _context.RemoveRange(r.Answers);
+
+            _context.QuizResults.RemoveRange(rounds);
+            await _context.SaveChangesAsync();
+            return NoContent();
+        }
     }
 }

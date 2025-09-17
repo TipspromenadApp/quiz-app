@@ -18,6 +18,7 @@ import PlaceholderPage from "./Pages/PlaceholderPage";
 import MultiplayerPage from "./Pages/MultiplayerPage";
 import BotQuiz from "./Pages/BotQuiz";  
 import ManageQuestions from "./Pages/ManageQuestions";       
+import CalmPage from "./Pages/CalmPage";
 
 import { loadUserQuestions } from "./lib/userQuestions";
 
@@ -68,6 +69,8 @@ function App() {
         <Route path="/questions/manage" element={<ManageQuestions />} />
         <Route path="/results" element={<Results />} />
         <Route path="/stay-logged-in" element={<StayLoggedIn />} />
+        <Route path="/calm" element={<CalmPage />} />
+
       </Routes>
     </Router>
   );
